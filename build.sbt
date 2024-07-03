@@ -10,7 +10,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "DIALS",
     idePackagePrefix := Some("com.lsc")
-  ) enablePlugins (Cinnamon) dependsOn(GenericSimUtilities)
+  ) enablePlugins Cinnamon dependsOn GenericSimUtilities
 
 lazy val GenericSimUtilities = (project in file("GenericSimUtilities"))
   .settings(

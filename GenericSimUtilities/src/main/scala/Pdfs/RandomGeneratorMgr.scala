@@ -24,8 +24,7 @@ object RandomGeneratorMgr:
       .getAllClasses
       .asScala
       .toList
-      .filter(c => c.getPackageName.equalsIgnoreCase(Constants.MathApacheRandomPkgName))
-      .filter(c => c.getSimpleName.equalsIgnoreCase(ConfigDb.`DIALS.Random.generator`)).headOption match
+      .filter(c => c.getPackageName.equalsIgnoreCase(Constants.MathApacheRandomPkgName)).find(c => c.getSimpleName.equalsIgnoreCase(ConfigDb.`DIALS.Random.generator`)) match
       case Some(clzzRes) => Try(clzzRes.load()) match
         case Failure(exception) => throw new IllegalArgumentException(s"Class ${ConfigDb.`DIALS.Random.generator`} cannot be loaded from package ${Constants.MathApacheRandomPkgName}")
         case Success(clzz) => clzz.getDeclaredConstructor().newInstance().asInstanceOf[RandomGenerator]

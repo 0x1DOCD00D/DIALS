@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 6/2/24, 1:59 PM, 2. Mark Grechanik and Lone Star Consulting, Inc. All rights reserved.
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  
+ *
  *  See the License for the specific language governing permissions and limitations under the License.
  */
 
@@ -30,15 +30,14 @@ object PdfStreamGenerator:
       .getAllClasses
       .asScala
       .toList
-      .filter(c => c.getPackageName.equalsIgnoreCase(Constants.MathApacheDistributionsPkgName))
-      .filter(c => c.getSimpleName.equalsIgnoreCase(distName)).headOption match
+      .filter(c => c.getPackageName.equalsIgnoreCase(Constants.MathApacheDistributionsPkgName)).find(c => c.getSimpleName.equalsIgnoreCase(distName)) match
         case Some(clzzRes) => Try(clzzRes.load()) match
           case Failure(exception) => throw new IllegalArgumentException(s"Class $distName cannot be loaded from package ${Constants.MathApacheDistributionsPkgName}")
           case Success(clzzDist) => clzzDist
         case None => throw new IllegalArgumentException(s"Class $distName is found in package ${Constants.MathApacheDistributionsPkgName}")
-    
+
     distName match {
-      case Constants.BetaDistribution 
+      case Constants.BetaDistribution
            | Constants.CauchyDistribution
            | Constants.FDistribution
            | Constants.GammaDistribution
@@ -55,7 +54,7 @@ object PdfStreamGenerator:
               .newInstance(rg, params(0), params(1))
               .asInstanceOf[AbstractRealDistribution]
       case Constants.BinomialDistribution
-           | Constants.ZipfDistribution      
+           | Constants.ZipfDistribution
            | Constants.PascalDistribution => distClass
               .getDeclaredConstructor(classOf[RandomGenerator], classOf[Int], classOf[Double])
               .newInstance(rg, params(0).toInt, params(1))
@@ -85,7 +84,7 @@ object PdfStreamGenerator:
       case Constants.TriangularDistribution => distClass
         .getDeclaredConstructor(classOf[RandomGenerator], classOf[Double], classOf[Double], classOf[Double])
         .newInstance(rg, params(0), params(1), params(2))
-        .asInstanceOf[AbstractRealDistribution]      
+        .asInstanceOf[AbstractRealDistribution]
 
       case Constants.UniformIntegerDistribution => distClass
         .getDeclaredConstructor(classOf[RandomGenerator], classOf[Int], classOf[Int])
