@@ -36,7 +36,7 @@ val catsEffectVersion = "3.4-389-3862cf0"
 val typesafeScalaLogging = "3.9.4"
 val protobufVersion = "1.0.1"
 val catsScalatestEffects = "1.4.0"
-val apacheSSHVersion = "2.9.1"
+val apacheSSHVersion = "2.9.3"
 val apacheRngVersion = "1.3"
 val guavaVersion = "33.2.1-jre"
 
