@@ -22,7 +22,6 @@ object Constants:
   final val DotSeparator = "\\."
   final val Dot = "."
   final val ArgumentUnderscore = "_"
-  val MathApacheRandomPkgName = "org.apache.commons.math3.random"
   val MathApacheDistributionsPkgName = "org.apache.commons.math3.distribution"
   val DefaultRandomGenerator: String = "Well1024a"
 
