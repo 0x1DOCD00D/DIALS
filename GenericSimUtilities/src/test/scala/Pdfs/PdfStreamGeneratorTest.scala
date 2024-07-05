@@ -5,11 +5,12 @@ import Utilz.{Constants, CreateLogger}
 import org.apache.commons.math3.distribution.{BetaDistribution, BinomialDistribution, CauchyDistribution, ChiSquaredDistribution, ExponentialDistribution, FDistribution, GammaDistribution, GeometricDistribution, GumbelDistribution, HypergeometricDistribution, ParetoDistribution, PascalDistribution, PoissonDistribution, TDistribution, TriangularDistribution, ZipfDistribution}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.slf4j.Logger
 
 import scala.util.hashing.MurmurHash3
 
 class PdfStreamGeneratorTest extends AnyFlatSpec with Matchers {
-  val logger = CreateLogger(classOf[PdfStreamGeneratorTest])
+  val logger: Logger = CreateLogger(classOf[PdfStreamGeneratorTest])
   behavior of "random number generator"
 
   it should "create hash codes from arrays of doubles" in {

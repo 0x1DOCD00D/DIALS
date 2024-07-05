@@ -24,8 +24,8 @@ type DistributionType = Either[String, AbstractIntegerDistribution | AbstractRea
 class PdfStreamGeneratorException(message: String) extends Exception(message)
 
 object PdfStreamGenerator:
-  val logger = CreateLogger(classOf[PdfStreamGenerator.type])
-  val randGen = RandomGeneratorMgr()
+  val logger: Logger = CreateLogger(classOf[PdfStreamGenerator.type])
+  val randGen: Either[String, RandomGenerator] = RandomGeneratorMgr()
 
   private def generateSamples(generator: DistributionType): LazyList[Double] =
     generator match

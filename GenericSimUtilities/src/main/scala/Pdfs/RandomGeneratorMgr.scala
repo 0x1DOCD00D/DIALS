@@ -13,12 +13,13 @@ import com.google.common.reflect.ClassPath
 
 import scala.util.{Failure, Success, Try}
 import org.apache.commons.math3.random.*
+import org.slf4j.Logger
 
 import java.util.stream.Collectors
 import scala.jdk.CollectionConverters.*
 
 object RandomGeneratorMgr:
-  val logger = CreateLogger(RandomGeneratorMgr.getClass)
+  val logger: Logger = CreateLogger(RandomGeneratorMgr.getClass)
   enum RandomGenerators:
     case ISAACRandom, JDKRandomGenerator, MersenneTwister, Well512a, Well1024a, Well19937a, Well19937c, Well44497a, Well44497b
 
