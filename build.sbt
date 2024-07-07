@@ -10,9 +10,15 @@ lazy val root = (project in file("."))
   .settings(
     name := "DIALS",
     idePackagePrefix := Some("com.lsc")
-  ).aggregate(GenericSimUtilities) enablePlugins Cinnamon dependsOn GenericSimUtilities
+  ).aggregate(GenericSimUtilities, SlanMachinery) enablePlugins Cinnamon dependsOn (GenericSimUtilities, SlanMachinery)
 
 Global / excludeLintKeys +=idePackagePrefix
+
+lazy val SlanMachinery = (project in file("SlanMachinery"))
+  .settings(
+    name := "SlanMachinery",
+    libraryDependencies ++= commonDependencies
+  ) aggregate(GenericSimUtilities) dependsOn(GenericSimUtilities)
 
 lazy val GenericSimUtilities = (project in file("GenericSimUtilities"))
   .settings(
