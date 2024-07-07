@@ -9,6 +9,7 @@
 package GenericDefinitions
 
 import Utilz.{ConfigDb, CreateLogger}
+import org.slf4j.Logger
 
 import scala.Dynamic
 import scala.language.dynamics
@@ -17,7 +18,7 @@ import scala.language.postfixOps
 trait DialsEntity
 
 class KeywordTemplate[T <: DialsEntity](classType: Class[T]) extends Dynamic {
-  val logger = CreateLogger(classOf[KeywordTemplate[T]])
+  val logger: Logger = CreateLogger(classOf[KeywordTemplate[T]])
   
   infix def selectDynamic(name: String): T = {
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Creating an entity of ${classType.getName} named $name")

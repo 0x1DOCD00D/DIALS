@@ -18,7 +18,7 @@ lazy val SlanMachinery = (project in file("SlanMachinery"))
   .settings(
     name := "SlanMachinery",
     libraryDependencies ++= commonDependencies
-  ) aggregate(GenericSimUtilities) dependsOn(GenericSimUtilities)
+  ) aggregate GenericSimUtilities dependsOn GenericSimUtilities
 
 lazy val GenericSimUtilities = (project in file("GenericSimUtilities"))
   .settings(
