@@ -8,7 +8,28 @@
 
 package GenericDefinitions
 
-object StateEntity:
-  case class StateStructure(name: String)
+import Utilz.CreateLogger
 
-class StateEntity
+import scala.collection.mutable.ListBuffer
+
+object StateEntity:
+  private var currentState: Option[StateEntity] = None
+  
+  def apply(name: String): StateEntity =
+    val newState = new StateEntity(name)
+    currentState = Some(newState)
+    newState
+
+class StateEntity(val name: String) extends DialsEntity:
+  private val logger = CreateLogger(classOf[StateEntity])
+  private val behaviors: ListBuffer[BehaviorEntity] = ListBuffer()
+  
+  infix def behaves(defBehavior: => BehaviorEntity): BehaviorEntity =
+    AgentEntity(this)
+    defBehavior
+
+  infix def switch2[T](nextState: StateEntity): StateEntity =
+    require(nextState != null)
+    logger.info(s"Switching from state $name to state ${nextState.name} for the agent ${AgentEntity.getCurrentAgent}")
+    AgentEntity(this, nextState)  
+    this

@@ -25,11 +25,27 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
 
   it should "do something here" in {
     (agent process1) has {
-      
+      (state st1) behaves {
+//        behavior is already a keyword in scalatest so we can use the keyword action, alternatively
+        (action b1) contains {
+          println("b1 in s1")
+        };
+        (action b2)
+      } switch2 (state st2);     
     }
+    
     (agent process2) has {
-
+      (state onlyOneState) behaves (Keywords.behavior b1) switch2 (state onlyOneState)
     }
-    AgentEntity() shouldBe List("process2", "process1")
+
+    (agent process3) has {
+      (state onlyOneState) behaves (action b3) contains {
+        ()
+      } contains {
+        println("b3 in process3")
+      } 
+    }
+    logger.info(AgentEntity.toString)
+    AgentEntity() shouldBe List("process3", "process2", "process1")
   }
 }

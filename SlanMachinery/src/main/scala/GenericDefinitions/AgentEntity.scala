@@ -8,6 +8,9 @@
 
 package GenericDefinitions
 
+import Utilz.CreateLogger
+
+import scala.collection.mutable
 import scala.{:+, Dynamic}
 import scala.collection.mutable.ListBuffer
 import scala.language.dynamics
@@ -56,11 +59,13 @@ import scala.language.postfixOps
 * the elements that are representations of these entities. The problem is to make sure that all keywords and blocks of code that finish a declarative
 * statement result in an object of the type that implements the method ~. Using semicolon seems to be a natural way to combine declarations.
 * When an object of StateEntity or ResourceEntity is created it is added to the list of states/resources of the current top context agent.
-* 
-* 
-*      */
+*/
 object AgentEntity:
+  private val logger = CreateLogger(classOf[AgentEntity])
   private val agents: ListBuffer[AgentEntity] = ListBuffer()
+
+  override def toString: String = 
+    s"All agents: ${agents.toList.map(_.name)} with the following breakdown:\n" + agents.map(_.toString).mkString(";\n\n")
 
   def apply(): List[String] = agents.map(_.name).toList
   
@@ -69,13 +74,36 @@ object AgentEntity:
     agents.prependAll(List(agent))
     agent
 
+  def apply(stateEntity: StateEntity): Unit =
+    agents.head.states.append(stateEntity)
+
+  def apply(stateEntityFrom: StateEntity, stateEntity2: StateEntity): Unit =
+    if agents.head.stateTransitions.contains(stateEntityFrom) then
+      if agents.head.stateTransitions(stateEntityFrom) == stateEntity2 then
+        logger.warn(s"Transition from state $stateEntityFrom to state $stateEntity2 already exists")
+      else  
+        agents.head.stateTransitions(stateEntityFrom) = stateEntity2
+    else
+      agents.head.stateTransitions.put(stateEntityFrom, stateEntity2)
+  
+  def apply(resourceEntity: ResourceEntity): Unit =
+    agents.head.resources.append(resourceEntity)
+
+  def getCurrentAgent: Option[String] = agents.headOption.map(_.name)
+  def getCurrentAgentState: Option[StateEntity] = agents.headOption.map(_.getCurrentState).flatten
+  
 class AgentEntity(val name: String) extends DialsEntity:
   private val states: ListBuffer[StateEntity] = ListBuffer()
+  private val stateTransitions: mutable.Map[StateEntity, StateEntity] = mutable.Map()
   private val resources: ListBuffer[ResourceEntity] = ListBuffer()
-  
+
+  override def toString: String = 
+    s"Agent $name has states: ${states.map(_.name).mkString(", ")} and resources: ${resources.map(_.name).mkString(", ")}\nTransitions: ${stateTransitions.map{case (k, v) => s"${k.name} -> ${v.name}"}.mkString(", ")}"
+
   def getStates: List[StateEntity] = states.toList
+  def getCurrentState: Option[StateEntity] = getStates.headOption
+  def checkIfStateExists(se:StateEntity): Boolean = states.toList.exists(s => s.name == se.name)
   def getResources: List[ResourceEntity] = resources.toList
   
   infix def has[T](defAgent: T): T =
-    val x = 1  
     defAgent

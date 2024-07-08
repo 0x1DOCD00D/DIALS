@@ -8,6 +8,10 @@
 
 package GenericDefinitions
 
-class ResourceEntity
+class ResourceEntity(val name: String) extends DialsEntity:
+  infix def contains(defBehavior: => Unit): ResourceEntity =
+    defBehavior
+    this
+    
 object ResourceEntity:
   case class ResourceStructure(name: String)

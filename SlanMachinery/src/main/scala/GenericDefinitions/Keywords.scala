@@ -9,4 +9,7 @@
 package GenericDefinitions
 
 object Keywords:
-  val agent = new KeywordTemplate(classOf[AgentEntity]) 
+  val agent = new KeywordTemplate(classOf[AgentEntity])
+  val state = new KeywordTemplate(classOf[StateEntity])
+  val behavior = new KeywordTemplate(classOf[BehaviorEntity])
+  val action = new KeywordTemplate(classOf[BehaviorEntity])

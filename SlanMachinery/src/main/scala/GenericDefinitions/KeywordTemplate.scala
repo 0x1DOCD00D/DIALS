@@ -24,7 +24,8 @@ class KeywordTemplate[T <: DialsEntity](classType: Class[T]) extends Dynamic {
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Creating an entity of ${classType.getName} named $name")
     if classType == classOf[AgentEntity] then AgentEntity(name).asInstanceOf[T]
 //    else if classType == classOf[ResourceEntity] then ResourceEntity(name)
-//    else if classType == classOf[StateEntity] then StateEntity(name)
+    else if classType == classOf[StateEntity] then StateEntity(name).asInstanceOf[T]
+    else if classType == classOf[BehaviorEntity] then BehaviorEntity(name).asInstanceOf[T]
     else throw new IllegalArgumentException(s"Unknown entity type $classType")
   }
 }
