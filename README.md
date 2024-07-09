@@ -1,2 +1,2 @@
 # DIALS
-DIstributed Agent Language for Simulations
+DIstributed Agents   Language for Simulations

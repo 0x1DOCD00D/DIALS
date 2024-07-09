@@ -149,5 +149,4 @@ class AgentEntity(val name: String) extends DialsEntity:
   def checkIfStateExists(se:StateEntity): Boolean = states.toList.exists(s => s.name == se.name)
   def getResources: List[ResourceEntity] = resources.toList
   
-  infix def has[T](defAgent: T): T =
-    defAgent
+  infix def has[T](defAgent: T): T = defAgent
