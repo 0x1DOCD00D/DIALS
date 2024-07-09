@@ -12,6 +12,8 @@ import GenericDefinitions.BehaviorEntity.logger
 import Utilz.CreateLogger
 
 class BehaviorEntity(val name: String, val actualAction: Option[() => Unit] = None) extends DialsEntity:
+  override def toString: String = s"$name is " + (if actualAction.isDefined then "defined" else "empty")
+
   infix def switch2(nextState: StateEntity): BehaviorEntity =
     require(nextState != null)
     val currAgentState = AgentEntity.getCurrentAgentState
@@ -24,8 +26,13 @@ class BehaviorEntity(val name: String, val actualAction: Option[() => Unit] = No
       throw new IllegalStateException(s"The agent ${AgentEntity.getCurrentAgent} has no current state")
 
   infix def contains(defBehavior: => Unit): BehaviorEntity =
-    new BehaviorEntity(name, Some(() => defBehavior))
+    val nb = new BehaviorEntity(name, Some(() => defBehavior))
+    AgentEntity(nb)
+    nb
 
 object BehaviorEntity:
   private val logger = CreateLogger(classOf[BehaviorEntity])
-  def apply(name: String): BehaviorEntity = new BehaviorEntity(name)
+  def apply(name: String): BehaviorEntity =
+    val nb = new BehaviorEntity(name)
+    AgentEntity(nb)
+    nb

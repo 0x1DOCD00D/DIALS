@@ -69,18 +69,37 @@ object AgentEntity:
 
   def apply(): List[String] = agents.map(_.name).toList
   
-  def apply(name: String): AgentEntity = 
-    val agent = new AgentEntity(name)
-    agents.prependAll(List(agent))
-    agent
-
-  def apply(stateEntity: StateEntity): Unit =
-    val lst = agents.toList 
-    if lst.isEmpty then throw new IllegalStateException(s"No agent is defined even though the state is specified: ${stateEntity.name}")
-    else if !lst.head.states.exists(s => s.name == stateEntity.name) then
-      agents.head.states.append(stateEntity)
+  def apply(name: String): AgentEntity =
+    logger.info(s"Creating an agent entity named $name")
+    val found = agents.toList.find(a => a.name == name)
+    if found.isDefined then
+      logger.error(s"Agent $name already exists. Adding more definitions to the existing agent.")
+      val agt = found.get
+      val (l, r) = agents.partition(a => a.name == name)
+      agents.clear()
+      agents.appendAll(r)
+      agents.prependAll(l)
+      agt
     else
-      logger.warn(s"State ${stateEntity.name} already exists in ${agents.head.states.map(_.name).mkString(", ")}. Replacing it with the new state definition")
+      val agent = new AgentEntity(name)
+      agents.prependAll(List(agent))
+      agent
+
+  def getState(name: String): Option[StateEntity] = agents.headOption.flatMap(_.getStates.find(s => s.name == name))
+  
+  def apply(stateEntity: StateEntity): Unit =
+    logger.info(s"Creating a state entity for agent ${agents.head.name}: ${stateEntity.toString}")
+    val lst = agents.toList 
+    if lst.isEmpty then 
+      throw new IllegalStateException(s"No agent is defined even though the state is specified: ${stateEntity.name}")
+    else if !lst.head.states.exists(s => s.name == stateEntity.name) then
+      logger.info(s"Creating the state ${stateEntity.name} under the agent ${lst.head.name}")
+      agents.head.states.prepend(stateEntity)
+      agents.head.currentState = Some(stateEntity)
+    else
+      val oldState = lst.head.states.find(s => s.name == stateEntity.name).get
+      logger.info(s"Replacing state ${oldState.toString} in agent ${lst.head.name} with a new state entity ${stateEntity.toString}")
+      agents.head.currentState = Some(stateEntity)
       agents.head.states.update(agents.head.states.indexWhere(s => s.name == stateEntity.name), stateEntity)
 
   def apply(stateEntityFrom: StateEntity, stateEntity2: StateEntity): Unit =
@@ -91,6 +110,16 @@ object AgentEntity:
         agents.head.stateTransitions(stateEntityFrom) = stateEntity2
     else
       agents.head.stateTransitions.put(stateEntityFrom, stateEntity2)
+
+  def apply(action: BehaviorEntity): Unit =
+    val lst = agents.toList
+    if lst.isEmpty then throw new IllegalStateException(s"No agent is defined even though the behavior is specified: ${action.name}")
+    else if agents.head.currentState.isDefined then
+      val state = agents.head.currentState.get
+      logger.info(s"Creating a behavior entity named ${action.name} under the agent ${lst.head.name} for its state ${state.name}")
+      AgentEntity(new StateEntity(state.name, action :: state.behaviors))
+    else
+      throw new IllegalStateException(s"No state is defined even though the behavior is specified: ${action.name}")
   
   def apply(resourceEntity: ResourceEntity): Unit =
     agents.head.resources.append(resourceEntity)
@@ -102,12 +131,21 @@ class AgentEntity(val name: String) extends DialsEntity:
   private val states: ListBuffer[StateEntity] = ListBuffer()
   private val stateTransitions: mutable.Map[StateEntity, StateEntity] = mutable.Map()
   private val resources: ListBuffer[ResourceEntity] = ListBuffer()
+  private var currentState: Option[StateEntity] = None
 
-  override def toString: String = 
-    s"Agent $name has states: ${states.map(_.name).mkString(", ")} and resources: ${resources.map(_.name).mkString(", ")}\nTransitions: ${stateTransitions.map{case (k, v) => s"${k.name} -> ${v.name}"}.mkString(", ")}"
+  override def toString: String =
+    (if states.isEmpty then s"Agent $name has no states"
+    else s"Agent $name has states: ${states.map(_.name).mkString(", ")}")
+    + (if resources.isEmpty then " and no resources" 
+        else s" and resources are ${resources.map(_.name).mkString}") 
+    +
+      ( if stateTransitions.isEmpty then " and no state transitions\n"
+        else s" and state transitions are ${stateTransitions.map{case (k, v) => s"${k.name} -> ${v.name}"}.mkString("; ")}")
+    +
+      (if states.nonEmpty then states.toList.map(s => s"\nstate ${s.name}: " + s.behaviors.map(b=>b.toString()).mkString("; ")).mkString("\n") else "has no actions.")
 
   def getStates: List[StateEntity] = states.toList
-  def getCurrentState: Option[StateEntity] = getStates.headOption
+  def getCurrentState: Option[StateEntity] = currentState
   def checkIfStateExists(se:StateEntity): Boolean = states.toList.exists(s => s.name == se.name)
   def getResources: List[ResourceEntity] = resources.toList
   
