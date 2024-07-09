@@ -77,7 +77,7 @@ object AgentEntity:
   def apply(stateEntity: StateEntity): Unit =
     val lst = agents.toList 
     if lst.isEmpty then throw new IllegalStateException(s"No agent is defined even though the state is specified: ${stateEntity.name}")
-    else if lst.head.states.find(s => s.name == stateEntity.name).isEmpty then
+    else if !lst.head.states.exists(s => s.name == stateEntity.name) then
       agents.head.states.append(stateEntity)
     else
       logger.warn(s"State ${stateEntity.name} already exists in ${agents.head.states.map(_.name).mkString(", ")}. Replacing it with the new state definition")
@@ -96,7 +96,7 @@ object AgentEntity:
     agents.head.resources.append(resourceEntity)
 
   def getCurrentAgent: Option[String] = agents.headOption.map(_.name)
-  def getCurrentAgentState: Option[StateEntity] = agents.headOption.map(_.getCurrentState).flatten
+  def getCurrentAgentState: Option[StateEntity] = agents.headOption.flatMap(_.getCurrentState)
   
 class AgentEntity(val name: String) extends DialsEntity:
   private val states: ListBuffer[StateEntity] = ListBuffer()
