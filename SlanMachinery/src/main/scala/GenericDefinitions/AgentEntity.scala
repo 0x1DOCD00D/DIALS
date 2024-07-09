@@ -75,7 +75,13 @@ object AgentEntity:
     agent
 
   def apply(stateEntity: StateEntity): Unit =
-    agents.head.states.append(stateEntity)
+    val lst = agents.toList 
+    if lst.isEmpty then throw new IllegalStateException(s"No agent is defined even though the state is specified: ${stateEntity.name}")
+    else if lst.head.states.find(s => s.name == stateEntity.name).isEmpty then
+      agents.head.states.append(stateEntity)
+    else
+      logger.warn(s"State ${stateEntity.name} already exists in ${agents.head.states.map(_.name).mkString(", ")}. Replacing it with the new state definition")
+      agents.head.states.update(agents.head.states.indexWhere(s => s.name == stateEntity.name), stateEntity)
 
   def apply(stateEntityFrom: StateEntity, stateEntity2: StateEntity): Unit =
     if agents.head.stateTransitions.contains(stateEntityFrom) then

@@ -8,6 +8,7 @@
 
 package GenericDefinitions
 
+import GenericDefinitions.StateEntity.currentState
 import Utilz.CreateLogger
 
 import scala.collection.mutable.ListBuffer
@@ -17,16 +18,18 @@ object StateEntity:
   
   def apply(name: String): StateEntity =
     val newState = new StateEntity(name)
+    AgentEntity(newState)
     currentState = Some(newState)
     newState
 
-class StateEntity(val name: String) extends DialsEntity:
+class StateEntity(val name: String, val behaviors: List[() => BehaviorEntity] = List()) extends DialsEntity:
   private val logger = CreateLogger(classOf[StateEntity])
-  private val behaviors: ListBuffer[BehaviorEntity] = ListBuffer()
-  
-  infix def behaves(defBehavior: => BehaviorEntity): BehaviorEntity =
-    AgentEntity(this)
-    defBehavior
+
+  infix def behaves(defBehavior: => BehaviorEntity): StateEntity =
+    val nse = new StateEntity(name, (() => defBehavior) :: behaviors)
+    AgentEntity(nse)
+    nse
+    
 
   infix def switch2[T](nextState: StateEntity): StateEntity =
     require(nextState != null)
