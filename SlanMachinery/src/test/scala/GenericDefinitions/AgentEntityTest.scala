@@ -77,6 +77,6 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
       };
     }
     logger.info(AgentEntity.toString)
-    AgentEntity().head.toString shouldBe "process3"
+    AgentEntity().head shouldBe "process3"
   }
 }

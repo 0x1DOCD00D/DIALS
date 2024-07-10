@@ -9,6 +9,7 @@
 package GenericDefinitions
 
 import Utilz.CreateLogger
+import org.slf4j.Logger
 
 import scala.collection.mutable.ListBuffer
 
@@ -19,7 +20,7 @@ object StateEntity:
     newState
 
 case object SingleState extends StateEntity("SingleState"):
-  val logger = CreateLogger(classOf[SingleState.type])
+  val logger: Logger = CreateLogger(classOf[SingleState.type])
   logger.info("Single state is created")
   AgentEntity(SingleState)
   
