@@ -18,6 +18,11 @@ object StateEntity:
     AgentEntity(newState)
     newState
 
+case object SingleState extends StateEntity("SingleState"):
+  val logger = CreateLogger(classOf[SingleState.type])
+  logger.info("Single state is created")
+  AgentEntity(SingleState)
+  
 class StateEntity(val name: String, val behaviors: List[BehaviorEntity] = List()) extends DialsEntity:
   private val logger = CreateLogger(classOf[StateEntity])
 
@@ -31,8 +36,7 @@ class StateEntity(val name: String, val behaviors: List[BehaviorEntity] = List()
         throw new IllegalStateException(s"The agent ${AgentEntity.getCurrentAgent} has no current state - impossible!")
 
 
-  infix def switch2[T](nextState: => StateEntity): StateEntity =
+  infix def switch2[T](nextState: => StateEntity): Unit =
     require(nextState != null)
     logger.info(s"Switching from state $name to state ${nextState.name} for the agent ${AgentEntity.getCurrentAgent}")
     AgentEntity(this, nextState)
-    this

@@ -23,7 +23,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
   val logger: Logger = CreateLogger(classOf[AgentEntityTest])
   behavior of "dials entities"
 
-  it should "do something here" in {
+  it should "produce an intermediate representation of the agent definitions" in {
     (agent process1) has {
       (state st1) behaves {
 //        behavior is already a keyword in scalatest so we can use the keyword action, alternatively
@@ -52,5 +52,31 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
     }
     logger.info(AgentEntity.toString)
     AgentEntity() shouldBe List("process3", "process2", "process1")
+  }
+
+  it should "generate three agent definitions" in {
+    (agent process1) has {
+      (state st1) behaves {
+        (action b1);
+        (action b2)
+      } switch2 (state st2);
+      
+      (state st2) behaves {
+        (action b5) contains {} contains {}
+      } switch2 (state st1)
+    }
+
+    (agent process2) has {}
+
+    (agent process3) has {
+      SingleState behaves {
+        EmptyBehavior
+      };
+      (state WrongState) behaves {
+        EmptyBehavior
+      };
+    }
+    logger.info(AgentEntity.toString)
+    AgentEntity().head.toString shouldBe "process3"
   }
 }

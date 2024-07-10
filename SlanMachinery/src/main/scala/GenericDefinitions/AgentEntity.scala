@@ -135,14 +135,15 @@ class AgentEntity(val name: String) extends DialsEntity:
 
   override def toString: String =
     (if states.isEmpty then s"Agent $name has no states"
-    else s"Agent $name has states: ${states.map(_.name).mkString(", ")}")
+    else 
+      if states.isEmpty then s"Agent $name has no states" else s"Agent $name has states: ${states.map(_.name).mkString(", ")}")
     + (if resources.isEmpty then " and no resources" 
         else s" and resources are ${resources.map(_.name).mkString}") 
     +
       ( if stateTransitions.isEmpty then " and no state transitions\n"
         else s" and state transitions are ${stateTransitions.map{case (k, v) => s"${k.name} -> ${v.name}"}.mkString("; ")}")
     +
-      (if states.nonEmpty then states.toList.map(s => s"\nstate ${s.name}: " + s.behaviors.map(b=>b.toString()).mkString("; ")).mkString("\n") else "has no actions.")
+      (if states.nonEmpty then states.toList.map(s => s"\nstate ${s.name}: " + s.behaviors.map(b=>b.toString()).mkString(" ")).mkString("\n") else "")
 
   def getStates: List[StateEntity] = states.toList
   def getCurrentState: Option[StateEntity] = currentState

@@ -11,6 +11,8 @@ package GenericDefinitions
 import GenericDefinitions.BehaviorEntity.logger
 import Utilz.CreateLogger
 
+case object EmptyBehavior extends BehaviorEntity("EmptyBehavior")
+
 class BehaviorEntity(val name: String, val actualAction: Option[() => Unit] = None) extends DialsEntity:
   override def toString: String = s"$name is " + (if actualAction.isDefined then "defined" else "empty")
 
@@ -21,9 +23,7 @@ class BehaviorEntity(val name: String, val actualAction: Option[() => Unit] = No
       logger.info(s"Switching from state ${currAgentState.get.name} to the state ${nextState.name} for the agent ${AgentEntity.getCurrentAgent}")
       AgentEntity(currAgentState.get, nextState)
       this
-    else
-      logger.error(s"The agent ${AgentEntity.getCurrentAgent} has no current state")
-      throw new IllegalStateException(s"The agent ${AgentEntity.getCurrentAgent} has no current state")
+    else throw new IllegalStateException(s"The agent ${AgentEntity.getCurrentAgent} has no current state - totally impossible!")
 
   infix def contains(defBehavior: => Unit): BehaviorEntity =
     val nb = new BehaviorEntity(name, Some(() => defBehavior))
