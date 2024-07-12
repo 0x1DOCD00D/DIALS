@@ -18,6 +18,8 @@ class GroupEntity private (name: String, agents: ListBuffer[AgentEntity] = ListB
   private def nameIs: String = name
   
   private def addAgent(a: AgentEntity): Unit = agents.appendAll(List(a))
+  def removeAgent(a: AgentEntity): Unit = agents.filter(_.name == a.name).foreach(agents -= _)
+  
   private def addResource(r: ResourceEntity): Unit = resources.appendAll(List(r))
   
   infix def comprises[T](members: => T): Unit =

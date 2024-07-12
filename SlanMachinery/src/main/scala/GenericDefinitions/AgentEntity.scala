@@ -160,9 +160,10 @@ class AgentEntity(val name: String) extends DialsEntity:
       logger.error(s"The agent $name cannot join a group because it is already a member of a group")
     else group.comprises(this)
 
-  infix def leaves(group: GroupEntity): Unit =
-    require(group != null, "The group entity must be defined")
-    ???
+  infix def leaves(group: => GroupEntity): Unit =
+    if GlobalProcessingState.isGroup then
+      logger.error(s"The agent $name cannot leave a group because it's being defined as a member of a group")
+    else group.removeAgent(this)
 
 
   infix def has[T](defAgent: => T): Unit =
