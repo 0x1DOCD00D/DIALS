@@ -8,7 +8,8 @@
 
 package GenericDefinitions
 
-import Utilz.CreateLogger
+import GenericDefinitions.AgentEntity.logger
+import Utilz.{ConfigDb, CreateLogger}
 
 import scala.collection.mutable
 import scala.{:+, Dynamic}
@@ -23,15 +24,15 @@ import scala.language.postfixOps
 * depending on messages that are received by this agent.
   (agent process1) has {
   (state startState) behaves {
-    (behavior behavior1) contains {
+    (behavior behavior1) does {
       println(s"agent ${mutableRef.ref.get} behavior in the init state")
     };
-    (behavior behavior2) contains {
+    (behavior behavior2) does {
       println(s"agent ${mutableRef.ref.get} behavior 2 in the init state")
     }
   } transitions to(state newState);
   (state newState) behaves {
-    (behavior behavior1) contains {
+    (behavior behavior1) does {
       println(s"agent ${mutableRef.ref.get} behavior in the new state")
     }
   } transitions to(state newState1);
@@ -39,13 +40,13 @@ import scala.language.postfixOps
 }
 
 (agent process2) has {
-  (behavior behavior1) contains {
+  (behavior behavior1) does {
       println(s"agent ${mutableRef.ref.get} behavior in the new state")
     }
   (resource resource1)
 }
 * Agent process2 is a simple agent that does not have states and transitions. It is defined by a single behavior that is executed when, for example, an agent receives certain messages
-* and a single resource that is used by this agent. Evaluating (agent process1) results in an object of AgentEntity whose method, has takes a block of code that contains the definition of some FSM as
+* and a single resource that is used by this agent. Evaluating (agent process1) results in an object of AgentEntity whose method, has takes a block of code that does the definition of some FSM as
 * states with behaviors and their transitions. The initial state is designated with the case object InitialState and the transitions are defined
 * using the method, transitions. Some behaviors may be defined locally within the block of code inside the block of code that is passed to the method, has.
 * Once a block of code is passed to the method has it is executed and a state machine is extracted. That is, each (state <name>) entry is executed
@@ -55,7 +56,7 @@ import scala.language.postfixOps
 * Next, the method has is called and it executes the block of code that is passed to it. Each entry in this block of code declares either a state
 * or a resource. Executing each entry creates an object of either StateEntity or ResourceEntity and populates it with the information about this entity
 * just like it is done with the object of AgentEntity. 
-* One frequently used solution is a special combinator, usually ~ that combines different entities in a single context, e.g., a list that contains
+* One frequently used solution is a special combinator, usually ~ that combines different entities in a single context, e.g., a list that does
 * the elements that are representations of these entities. The problem is to make sure that all keywords and blocks of code that finish a declarative
 * statement result in an object of the type that implements the method ~. Using semicolon seems to be a natural way to combine declarations.
 * When an object of StateEntity or ResourceEntity is created it is added to the list of states/resources of the current top context agent.
@@ -150,4 +151,12 @@ class AgentEntity(val name: String) extends DialsEntity:
   def checkIfStateExists(se:StateEntity): Boolean = states.toList.exists(s => s.name == se.name)
   def getResources: List[ResourceEntity] = resources.toList
   
-  infix def has[T](defAgent: T): T = defAgent
+  infix def has[T](defAgent: => T): Unit =
+    GlobalProcessingState(this) match
+      case Left(errorMsg) => logger.error(errorMsg)
+      case Right(obj) => 
+        defAgent
+        GlobalProcessingState(NoEntity) match
+          case Left(errMsg) => logger.error(errMsg)
+          case Right(_) =>
+            if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Setting the global processing state to $obj")

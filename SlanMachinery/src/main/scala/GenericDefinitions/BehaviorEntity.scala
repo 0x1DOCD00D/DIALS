@@ -25,7 +25,7 @@ class BehaviorEntity(val name: String, val actualAction: Option[() => Unit] = No
       this
     else throw new IllegalStateException(s"The agent ${AgentEntity.getCurrentAgent} has no current state - totally impossible!")
 
-  infix def contains(defBehavior: => Unit): BehaviorEntity =
+  infix def does(defBehavior: => Unit): BehaviorEntity =
     val nb = new BehaviorEntity(name, Some(() => defBehavior))
     AgentEntity(nb)
     nb

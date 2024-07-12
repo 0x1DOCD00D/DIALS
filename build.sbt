@@ -50,7 +50,7 @@ val guavaVersion = "33.2.1-jre"
 
 
 fork := true
-
+test / parallelExecution := false
 run / cinnamon := true
 test / cinnamon := true
 cinnamonLogLevel := "INFO"

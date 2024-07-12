@@ -1,0 +1,34 @@
+/*
+ * Copyright (c) 7/10/24, 2:11 PM, 10. Mark Grechanik and Lone Star Consulting, Inc. All rights reserved.
+ *  
+ *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  
+ *  See the License for the specific language governing permissions and limitations under the License.
+ */
+
+package GenericDefinitions
+
+import Utilz.ConfigDb
+
+object GlobalProcessingState:
+  private var currentProcessingState: DialsEntity = NoEntity
+  
+  def isAgent: Boolean = currentProcessingState.isInstanceOf[AgentEntity]
+  def isResource: Boolean = currentProcessingState.isInstanceOf[ResourceEntity]
+  def isNoEntity: Boolean = currentProcessingState == NoEntity
+  def getCurrentProcessingState: String = currentProcessingState.getClass.getSimpleName
+  
+  def apply(state: DialsEntity): Either[String, DialsEntity] =
+    state match
+      case a: AgentEntity if currentProcessingState == NoEntity => 
+        currentProcessingState = a
+        Right(currentProcessingState)
+      case a: ResourceEntity if currentProcessingState == NoEntity =>
+        currentProcessingState = a
+        Right(currentProcessingState)
+      case a: ResourceEntity if currentProcessingState.isInstanceOf[AgentEntity] | currentProcessingState.isInstanceOf[ResourceEntity] =>
+        Right(currentProcessingState)
+      case NoEntity => 
+        currentProcessingState = NoEntity
+        Right(currentProcessingState)
+      case _ => Left(s"Error in setting the processing state to ${state.getClass.getSimpleName} from ${currentProcessingState.getClass.getSimpleName}")

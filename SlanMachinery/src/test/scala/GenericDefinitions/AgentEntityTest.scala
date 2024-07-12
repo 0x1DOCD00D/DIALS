@@ -9,31 +9,33 @@
 package GenericDefinitions
 
 import org.scalatest.funsuite.AnyFunSuiteLike
-
 import Utilz.{Constants, CreateLogger}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.slf4j.Logger
+
 import scala.Dynamic
 import scala.language.dynamics
 import scala.language.postfixOps
 import Keywords.*
+import org.scalatest.DoNotDiscover
 
+@DoNotDiscover
 class AgentEntityTest extends AnyFlatSpec with Matchers {
   val logger: Logger = CreateLogger(classOf[AgentEntityTest])
-  behavior of "dials entities"
+  behavior of "agents entities"
 
   it should "produce an intermediate representation of the agent definitions" in {
     (agent process1) has {
       (state st1) behaves {
 //        behavior is already a keyword in scalatest so we can use the keyword action, alternatively
-        (action b1) contains {
+        (action b1) does {
           println("b1 in s1")
         };
         (action b2)
       } switch2 (state st2);
       (state st2) behaves {
-        (action b5) contains {}
+        (action b5) does {}
       } switch2 (state st1)
     }
 
@@ -43,9 +45,9 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
 
     (agent process3) has {
       (state onlyOneState) behaves {
-        (action b3) contains {
+        (action b3) does {
           ()
-        } contains {
+        } does {
           println("b3 in process3")
         }
       }
@@ -60,9 +62,9 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
         (action b1);
         (action b2)
       } switch2 (state st2);
-      
+
       (state st2) behaves {
-        (action b5) contains {} contains {}
+        (action b5) does {} does {}
       } switch2 (state st1)
     }
 
@@ -76,6 +78,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
         EmptyBehavior
       };
     }
+
     logger.info(AgentEntity.toString)
     AgentEntity().head shouldBe "process3"
   }

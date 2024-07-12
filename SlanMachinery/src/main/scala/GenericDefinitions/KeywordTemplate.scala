@@ -16,6 +16,7 @@ import scala.language.dynamics
 import scala.language.postfixOps
 
 trait DialsEntity
+case object NoEntity extends DialsEntity
 
 class KeywordTemplate[T <: DialsEntity](classType: Class[T]) extends Dynamic {
   val logger: Logger = CreateLogger(classOf[KeywordTemplate[T]])
@@ -23,11 +24,13 @@ class KeywordTemplate[T <: DialsEntity](classType: Class[T]) extends Dynamic {
   infix def selectDynamic(name: String): T = {
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Creating an entity of ${classType.getName} named $name")
     if classType == classOf[AgentEntity] then AgentEntity(name).asInstanceOf[T]
-//    else if classType == classOf[ResourceEntity] then ResourceEntity(name)
+    else if classType == classOf[ResourceEntity] then ResourceEntity(name).asInstanceOf[T]
+    else if classType == classOf[FieldEntity] then FieldEntity(name).asInstanceOf[T]
     else if classType == classOf[StateEntity] then
       if AgentEntity.getState(name).isDefined then AgentEntity.getState(name).get.asInstanceOf[T]
       else StateEntity(name).asInstanceOf[T]
     else if classType == classOf[BehaviorEntity] then BehaviorEntity(name).asInstanceOf[T]
+    else if classType == classOf[DistributionEntity] then DistributionEntity(name).asInstanceOf[T]
     else throw new IllegalArgumentException(s"Unknown entity type $classType")
   }
 }
