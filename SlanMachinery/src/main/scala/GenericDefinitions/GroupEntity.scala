@@ -8,5 +8,44 @@
 
 package GenericDefinitions
 
+import GenericDefinitions.GroupEntity.logger
+import Utilz.CreateLogger
+
+import scala.collection.mutable.ListBuffer
+
+class GroupEntity private (name: String, agents: ListBuffer[AgentEntity] = ListBuffer(), resources: ListBuffer[ResourceEntity] = ListBuffer()) extends DialsEntity:
+  override def toString: String = s"group $name\n" + agents.mkString("\n") + resources.mkString("\n")
+  private def nameIs: String = name
+  
+  private def addAgent(a: AgentEntity): Unit = agents.appendAll(List(a))
+  private def addResource(r: ResourceEntity): Unit = resources.appendAll(List(r))
+  
+  infix def comprises[T](members: => T): Unit =
+    GlobalProcessingState(this) match
+      case Left(errMsg) =>
+        logger.error(errMsg)
+      case Right(_) => 
+        members
+        GlobalProcessingState(NoEntity)
+
 object GroupEntity:
-  case class GroupStructure(name: String)
+  private val logger = CreateLogger(classOf[GroupEntity])
+  private var groups: ListBuffer[GroupEntity] = ListBuffer()
+  def apply(name: String): GroupEntity = 
+    val newG = new GroupEntity(name)
+    groups.prependAll(List(newG)) 
+    newG
+
+  def apply(): List[String] = groups.map(_.nameIs).toList
+  
+  def apply(a: AgentEntity): Unit =
+    require(a != null, "The agent cannot be null")
+    groups.head.addAgent(a)
+
+  def apply(r: ResourceEntity): Unit =
+    require(r != null, "The resource cannot be null")
+    groups.head.addResource(r)
+
+  override def toString: String = groups.map(_.toString).mkString("\n")
+  
+  

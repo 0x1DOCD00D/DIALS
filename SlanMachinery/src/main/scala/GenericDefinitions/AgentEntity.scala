@@ -71,7 +71,7 @@ object AgentEntity:
   def apply(): List[String] = agents.map(_.name).toList
   
   def apply(name: String): AgentEntity =
-    logger.info(s"Creating an agent entity named $name")
+    if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Creating an agent entity named $name")
     val found = agents.toList.find(a => a.name == name)
     if found.isDefined then
       logger.error(s"Agent $name already exists. Adding more definitions to the existing agent.")
@@ -80,12 +80,16 @@ object AgentEntity:
       agents.clear()
       agents.appendAll(r)
       agents.prependAll(l)
+      joinGroup(agt)
       agt
     else
       val agent = new AgentEntity(name)
       agents.prependAll(List(agent))
+      joinGroup(agent)
       agent
 
+  def joinGroup(a: AgentEntity): Unit = if GlobalProcessingState.isGroup then GroupEntity(a)
+  
   def getState(name: String): Option[StateEntity] = agents.headOption.flatMap(_.getStates.find(s => s.name == name))
   
   def apply(stateEntity: StateEntity): Unit =
@@ -151,6 +155,16 @@ class AgentEntity(val name: String) extends DialsEntity:
   def checkIfStateExists(se:StateEntity): Boolean = states.toList.exists(s => s.name == se.name)
   def getResources: List[ResourceEntity] = resources.toList
   
+  infix def joins(group: => GroupEntity): Unit =
+    if GlobalProcessingState.isGroup then 
+      logger.error(s"The agent $name cannot join a group because it is already a member of a group")
+    else group.comprises(this)
+
+  infix def leaves(group: GroupEntity): Unit =
+    require(group != null, "The group entity must be defined")
+    ???
+
+
   infix def has[T](defAgent: => T): Unit =
     GlobalProcessingState(this) match
       case Left(errorMsg) => logger.error(errorMsg)

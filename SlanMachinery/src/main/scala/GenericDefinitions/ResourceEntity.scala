@@ -77,6 +77,9 @@ object ResourceEntity:
       if !containerResourcesStack.isEmpty then
         containerResourcesStack.top.fieldResources += newRes
       newRes
+    else if GlobalProcessingState.isGroup then
+      GroupEntity(newRes)
+      newRes
     else if GlobalProcessingState.isNoEntity then
       topLevelResources += newRes
       newRes

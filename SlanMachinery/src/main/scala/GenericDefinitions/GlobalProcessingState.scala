@@ -13,6 +13,7 @@ import Utilz.ConfigDb
 object GlobalProcessingState:
   private var currentProcessingState: DialsEntity = NoEntity
   
+  def isGroup: Boolean = currentProcessingState.isInstanceOf[GroupEntity]
   def isAgent: Boolean = currentProcessingState.isInstanceOf[AgentEntity]
   def isResource: Boolean = currentProcessingState.isInstanceOf[ResourceEntity]
   def isNoEntity: Boolean = currentProcessingState == NoEntity
@@ -20,9 +21,13 @@ object GlobalProcessingState:
   
   def apply(state: DialsEntity): Either[String, DialsEntity] =
     state match
-      case a: AgentEntity if currentProcessingState == NoEntity => 
+      case a: GroupEntity if currentProcessingState == NoEntity =>
         currentProcessingState = a
         Right(currentProcessingState)
+      case a: AgentEntity if currentProcessingState.isInstanceOf[GroupEntity] =>
+        Left(s"Agent ${a.name} cannot be defined inside a group")
+      case a: ResourceEntity if currentProcessingState.isInstanceOf[GroupEntity] =>
+        Left(s"Resource ${a.name} cannot be defined inside a group")
       case a: ResourceEntity if currentProcessingState == NoEntity =>
         currentProcessingState = a
         Right(currentProcessingState)
