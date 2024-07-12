@@ -22,11 +22,11 @@ import scala.collection.mutable.ListBuffer
 * */
 
 class ResourceEntity private (val name: String, val fieldResources: ListBuffer[ResourceEntity] = ListBuffer(), var values: Array[Any] = Array()) extends DialsEntity:
-  override def toString: String = 
+  override def toString: String =
     s"resource $name" +
       (if values.isEmpty then " holds no values" else s" holds value(s) ${values.mkString(",")}") +
-      (if fieldResources.isEmpty then " and it doesn't have any fields" 
-      else 
+      (if fieldResources.isEmpty then " and it doesn't have any fields"
+      else
         s" has fields ${fieldResources.map(_.name)}\n" +
         fieldResources.map(_.toString).mkString("\n")
         )
@@ -34,9 +34,9 @@ class ResourceEntity private (val name: String, val fieldResources: ListBuffer[R
   infix def contains[T](resources: => T): ResourceEntity =
     if containerResourcesStack.isEmpty then
       GlobalProcessingState(this) match
-        case Left(errMsg) => 
+        case Left(errMsg) =>
           logger.error(errMsg)
-        case Right(value) => 
+        case Right(value) =>
           logger.info(s"Setting the global processing state to $value")
     containerResourcesStack.push(this)
     resources
@@ -47,9 +47,9 @@ class ResourceEntity private (val name: String, val fieldResources: ListBuffer[R
   infix def :=[T](setV: T*): Unit =
     logger.info(s"Setting the value of the resource $name to $setV")
     values = setV.toArray
-  
+
   //TODO: need to implement the logic of the resource value retrieval
-  def getStoredValues: Array[Any] = values //need to look up the global table of resources   
+  def getStoredValues: Array[Any] = values //need to look up the global table of resources
 
 object ResourceEntity:
   private val topLevelResources: ListBuffer[ResourceEntity] = ListBuffer()
@@ -59,7 +59,7 @@ object ResourceEntity:
   override def toString: String = topLevelResources.map(_.toString).mkString("\n")
 
   def findResource(ref: ResourceEntity): Option[ResourceEntity] =
-    
+
     topLevelResources.find(_.name == ref.name) match
       case Some(r) => Some(r)
       case None => None
@@ -68,8 +68,10 @@ object ResourceEntity:
   def apply(name: String): ResourceEntity =
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Current global processing state is ${GlobalProcessingState.getCurrentProcessingState}")
     val newRes = new ResourceEntity(name)
-    if GlobalProcessingState.isAgent && containerResourcesStack.isEmpty then
-      AgentEntity(newRes)
+    if GlobalProcessingState.isAgent then
+      if containerResourcesStack.isEmpty then
+        AgentEntity(newRes)
+      else containerResourcesStack.top.fieldResources += newRes 
       newRes
     else if GlobalProcessingState.isResource then
       if !containerResourcesStack.isEmpty then
