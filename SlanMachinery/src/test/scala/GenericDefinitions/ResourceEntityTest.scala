@@ -34,7 +34,8 @@ class ResourceEntityTest extends AnyFlatSpec with Matchers {
       } := 20;
     }
     logger.info(ResourceEntity.toString)
-    ResourceEntity() shouldBe List("res1", "res2")
+    ResourceEntity() shouldBe List("res2", "res1")
+    GlobalProcessingState.resetAll
   }
 
   it should "generate resource definitions inside and outside of agents" in {
@@ -57,6 +58,7 @@ class ResourceEntityTest extends AnyFlatSpec with Matchers {
     }
     logger.info(AgentEntity.toString)
     ResourceEntity() shouldBe List("res2")
+    GlobalProcessingState.resetAll
   }
 
 }

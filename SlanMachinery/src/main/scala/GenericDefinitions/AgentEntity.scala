@@ -68,6 +68,8 @@ object AgentEntity:
   override def toString: String = 
     s"All agents: ${agents.toList.map(_.name)} with the following breakdown:\n" + agents.map(_.toString).mkString(";\n\n")
 
+  def resetAll: Unit = agents.clear()
+  
   def apply(): List[String] = agents.map(_.name).toList
   
   def apply(name: String): AgentEntity =
@@ -127,7 +129,10 @@ object AgentEntity:
       throw new IllegalStateException(s"No state is defined even though the behavior is specified: ${action.name}")
   
   def apply(resourceEntity: ResourceEntity): Unit =
-    agents.head.resources.append(resourceEntity)
+    if agents.isEmpty then throw new IllegalStateException(s"No agent is defined even though the resource is specified: ${resourceEntity.name}")
+    else
+      logger.info(s"Creating a resource entity named ${resourceEntity.name} under the agent ${agents.head.name}")
+      agents.head.resources.prependAll(List(resourceEntity))
 
   def getCurrentAgent: Option[String] = agents.headOption.map(_.name)
   def getCurrentAgentState: Option[StateEntity] = agents.headOption.flatMap(_.getCurrentState)

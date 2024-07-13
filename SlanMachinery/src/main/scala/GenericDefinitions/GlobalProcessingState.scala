@@ -19,7 +19,14 @@ object GlobalProcessingState:
   def isResource: Boolean = currentProcessingState.isInstanceOf[ResourceEntity]
   def isNoEntity: Boolean = currentProcessingState == NoEntity
   def getCurrentProcessingState: String = currentProcessingState.getClass.getSimpleName
-  
+
+  def resetAll: Unit = 
+    currentProcessingState = NoEntity
+    AgentEntity.resetAll
+    ResourceEntity.resetAll
+    GroupEntity.resetAll
+    MessageEntity.resetAll
+    
   def apply(state: DialsEntity): Either[String, DialsEntity] =
     state match
       case a: MessageEntity if currentProcessingState == NoEntity =>
@@ -28,8 +35,9 @@ object GlobalProcessingState:
       case a: GroupEntity if currentProcessingState == NoEntity =>
         currentProcessingState = a
         Right(currentProcessingState)
-      case a: AgentEntity if currentProcessingState.isInstanceOf[GroupEntity] =>
-        Left(s"Agent ${a.name} cannot be defined inside a group")
+      case a: AgentEntity if currentProcessingState == NoEntity =>
+        currentProcessingState = a
+        Right(currentProcessingState)
       case a: ResourceEntity if currentProcessingState.isInstanceOf[GroupEntity] =>
         Left(s"Resource ${a.name} cannot be defined inside a group")
       case a: ResourceEntity if currentProcessingState == NoEntity =>

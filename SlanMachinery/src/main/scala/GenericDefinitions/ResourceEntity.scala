@@ -58,8 +58,11 @@ object ResourceEntity:
 
   override def toString: String = topLevelResources.map(_.toString).mkString("\n")
 
+  def resetAll: Unit = 
+    topLevelResources.clear()
+    containerResourcesStack.clear()
+    
   def findResource(ref: ResourceEntity): Option[ResourceEntity] =
-
     topLevelResources.find(_.name == ref.name) match
       case Some(r) => Some(r)
       case None => None
@@ -81,7 +84,8 @@ object ResourceEntity:
       GroupEntity(newRes)
       newRes
     else if GlobalProcessingState.isNoEntity then
-      topLevelResources += newRes
+      if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Adding new global resource entity $name to the top level resources")
+      topLevelResources.prependAll(List(newRes))
       newRes
     else
       throw new IllegalStateException(s"Resource $name is not defined within an agent or at the top level with the global state ${GlobalProcessingState.getCurrentProcessingState}")
