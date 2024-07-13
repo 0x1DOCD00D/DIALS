@@ -36,5 +36,5 @@ object BehaviorEntity:
   private val logger = CreateLogger(classOf[BehaviorEntity])
   def apply(name: String): BehaviorEntity =
     val nb = new BehaviorEntity(name)
-    AgentEntity(nb)
+    if GlobalProcessingState.isAgent then AgentEntity(nb)
     nb

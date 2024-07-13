@@ -23,6 +23,13 @@ class MessageEntity private(val name: String, val fields: ListBuffer[FieldEntity
           fields.map(_.toString).mkString("\n")
         )
 
+  infix def triggers[T](behavior: BehaviorEntity): MessageEntity =
+    if GlobalProcessingState.isChannel then
+      ChannelEntity(this, Some(behavior))
+    else 
+      logger.error(s"Message $name can be used to specify triggering behavior only in channels instead of ${GlobalProcessingState.getCurrentProcessingState}")
+    this  
+
   infix def comprises[T](fields: => T): Unit =
     if GlobalProcessingState.isNoEntity then
       GlobalProcessingState(this) match
@@ -63,5 +70,7 @@ object MessageEntity:
   def apply(name: String): MessageEntity =
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"New message entity $name is created")
     val newMsg = new MessageEntity(name)
-    allMessages.prependAll(List(newMsg))
+    if GlobalProcessingState.isChannel then
+      ChannelEntity(newMsg)
+    else allMessages.prependAll(List(newMsg))
     newMsg

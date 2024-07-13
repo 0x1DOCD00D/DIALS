@@ -13,6 +13,7 @@ object Keywords:
   val agent = new KeywordTemplate(classOf[AgentEntity])
   val state = new KeywordTemplate(classOf[StateEntity])
   val behavior = new KeywordTemplate(classOf[BehaviorEntity])
+  val channel = new KeywordTemplate(classOf[ChannelEntity])
   val action = new KeywordTemplate(classOf[BehaviorEntity])
   val resource = new KeywordTemplate(classOf[ResourceEntity])
   val message = new KeywordTemplate(classOf[MessageEntity])

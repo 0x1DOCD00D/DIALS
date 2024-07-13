@@ -25,6 +25,7 @@ class KeywordTemplate[T <: DialsEntity](classType: Class[T]) extends Dynamic {
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Creating an entity of ${classType.getName} named $name")
     if classType == classOf[AgentEntity] then AgentEntity(name).asInstanceOf[T]
     else if classType == classOf[ResourceEntity] then ResourceEntity(name).asInstanceOf[T]
+    else if classType == classOf[ChannelEntity] then ChannelEntity(name).asInstanceOf[T]
     else if classType == classOf[GroupEntity] then GroupEntity(name).asInstanceOf[T]
     else if classType == classOf[MessageEntity] then MessageEntity(name).asInstanceOf[T]
     else if classType == classOf[FieldEntity] then FieldEntity(name).asInstanceOf[T]

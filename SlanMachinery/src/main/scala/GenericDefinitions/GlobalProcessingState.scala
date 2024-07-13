@@ -13,6 +13,7 @@ import Utilz.ConfigDb
 object GlobalProcessingState:
   private var currentProcessingState: DialsEntity = NoEntity
   
+  def isChannel: Boolean = currentProcessingState.isInstanceOf[ChannelEntity]
   def isGroup: Boolean = currentProcessingState.isInstanceOf[GroupEntity]
   def isAgent: Boolean = currentProcessingState.isInstanceOf[AgentEntity]
   def isMessage: Boolean = currentProcessingState.isInstanceOf[MessageEntity]
@@ -26,9 +27,13 @@ object GlobalProcessingState:
     ResourceEntity.resetAll
     GroupEntity.resetAll
     MessageEntity.resetAll
+    ChannelEntity.resetAll
     
   def apply(state: DialsEntity): Either[String, DialsEntity] =
     state match
+      case a: ChannelEntity if currentProcessingState == NoEntity =>
+        currentProcessingState = a
+        Right(currentProcessingState)
       case a: MessageEntity if currentProcessingState == NoEntity =>
         currentProcessingState = a
         Right(currentProcessingState)
