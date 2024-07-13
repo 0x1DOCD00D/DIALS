@@ -13,6 +13,8 @@ import Utilz.{ConfigDb, CreateLogger}
 
 import scala.collection.mutable.ListBuffer
 
+case object AllChannels extends DialsEntity
+
 class ChannelEntity private (val name: String, val messages: ListBuffer[(MessageEntity, Option[BehaviorEntity])] = ListBuffer()) extends DialsEntity:
   override def toString: String =
     s"channel $name" +
@@ -21,8 +23,8 @@ class ChannelEntity private (val name: String, val messages: ListBuffer[(Message
         (s" can trasports only the messages of the following types: ${messages.map(_._1.name).mkString(", ")}\n") +
           messages.map { case (m, b) => s"Message ${m.name} triggers behavior ${b.map(_.name).getOrElse("None")}" }.mkString("\n")
         )
-    
-  
+
+
   infix def transports[T](messages: => T): Unit =
     if GlobalProcessingState.isNoEntity then
       GlobalProcessingState(this) match

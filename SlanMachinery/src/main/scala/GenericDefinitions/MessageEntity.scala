@@ -51,6 +51,8 @@ class MessageEntity private(val name: String, val fields: ListBuffer[FieldEntity
 
   //TODO: need to implement the logic of the resource value retrieval
   def getStoredValues: Array[Any] = values //need to look up the global table of resources
+  
+  infix def send(channel: ChannelEntity*): Map[MessageEntity, Array[ChannelEntity]] = Map(this -> channel.toArray)
 
 object MessageEntity:
   private val allMessages: ListBuffer[MessageEntity] = ListBuffer()
