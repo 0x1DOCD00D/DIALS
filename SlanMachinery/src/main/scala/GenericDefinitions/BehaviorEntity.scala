@@ -16,6 +16,8 @@ case object EmptyBehavior extends BehaviorEntity("EmptyBehavior")
 class BehaviorEntity(val name: String, val actualAction: Option[() => Unit] = None) extends DialsEntity:
   override def toString: String = s"$name is " + (if actualAction.isDefined then "defined" else "empty")
 
+//  infix def triggeredBy(messages: => ): BehaviorEntity =
+    
   infix def switch2(nextState: StateEntity): BehaviorEntity =
     require(nextState != null)
     val currAgentState = AgentEntity.getCurrentAgentState

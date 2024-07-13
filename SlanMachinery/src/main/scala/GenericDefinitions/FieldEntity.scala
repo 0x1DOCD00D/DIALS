@@ -8,8 +8,18 @@
 
 package GenericDefinitions
 
-class FieldEntity(val name: String) extends DialsEntity:
-  infix def :=[T](values: T*): FieldEntity = this
-    
+import scala.collection.mutable.ListBuffer
+
+class FieldEntity private(val name: String, var values: Array[Any] = Array()) extends DialsEntity:
+  infix def :=[T](input: T*): Unit = values = input.toArray
+
+  override def toString: String = s"field $name" + (if values.isEmpty then " holds no values" else s" holds value(s) ${values.mkString(",")}")
+
+
 object FieldEntity:
-  def apply(name: String): FieldEntity = new FieldEntity(name)
+  def apply(name: String): FieldEntity =
+    if GlobalProcessingState.isMessage then  
+      val newField = new FieldEntity(name)
+      MessageEntity(newField)
+      newField
+    else throw new IllegalArgumentException(s"Field $name cannot be defined within other entity ${GlobalProcessingState.getCurrentProcessingState}")  

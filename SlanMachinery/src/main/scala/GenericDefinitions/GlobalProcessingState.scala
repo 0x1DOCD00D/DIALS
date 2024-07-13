@@ -15,12 +15,16 @@ object GlobalProcessingState:
   
   def isGroup: Boolean = currentProcessingState.isInstanceOf[GroupEntity]
   def isAgent: Boolean = currentProcessingState.isInstanceOf[AgentEntity]
+  def isMessage: Boolean = currentProcessingState.isInstanceOf[MessageEntity]
   def isResource: Boolean = currentProcessingState.isInstanceOf[ResourceEntity]
   def isNoEntity: Boolean = currentProcessingState == NoEntity
   def getCurrentProcessingState: String = currentProcessingState.getClass.getSimpleName
   
   def apply(state: DialsEntity): Either[String, DialsEntity] =
     state match
+      case a: MessageEntity if currentProcessingState == NoEntity =>
+        currentProcessingState = a
+        Right(currentProcessingState)
       case a: GroupEntity if currentProcessingState == NoEntity =>
         currentProcessingState = a
         Right(currentProcessingState)
