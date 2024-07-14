@@ -47,8 +47,6 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
       (state onlyOneState) behaves {
         (action b3) does {
           ()
-        } does {
-          println("b3 in process3")
         }
       }
     }
@@ -65,7 +63,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
       } switch2 (state st2);
 
       (state st2) behaves {
-        (action b5) does {} does {}
+        (action b5) does {}
       } switch2 (state st1)
     }
 
@@ -73,10 +71,9 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
 
     (agent process3) has {
       SingleState behaves {
-        EmptyBehavior
       };
       (state WrongState) behaves {
-        EmptyBehavior
+        ()
       };
     }
 

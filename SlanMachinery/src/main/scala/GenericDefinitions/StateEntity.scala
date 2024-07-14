@@ -30,7 +30,7 @@ class StateEntity(val name: String, val behaviors: List[BehaviorEntity] = List()
   override def toString: String = 
     s"StateEntity($name, ${behaviors.map(_.toString).mkString})"
 
-  infix def behaves(defBehavior: BehaviorEntity): StateEntity =
+  infix def behaves(defBehavior: Unit): StateEntity =
     AgentEntity.getCurrentAgentState match
       case Some(state) => state
       case None =>

@@ -19,10 +19,19 @@ class BehaviorEntity(val name: String, val actualAction: Option[() => Unit] = No
   override def toString: String = s"$name is " + (if actualAction.isDefined then "defined" else "empty")
 
 //  infix def triggeredBy(messages: => ): BehaviorEntity =
-  infix def does(defBehavior: => Unit): BehaviorEntity =
+  infix def does(defBehavior: => Unit): Unit =
     val nb = new BehaviorEntity(name, Some(() => defBehavior))
-    AgentEntity(nb)
-    nb
+    if GlobalProcessingState.isAgent then 
+      AgentEntity(nb)
+      
+    else if GlobalProcessingState.isNoEntity then
+      GlobalProcessingState(nb) match
+        case Left(errMsg) => 
+          logger.error(errMsg)
+          throw new IllegalArgumentException(errMsg)
+        case Right(_) => () 
+          
+    else throw new IllegalStateException(s"Behavior $name cannot be defined within other entity ${GlobalProcessingState.getCurrentProcessingState}")
 
 object BehaviorEntity:
   private val behaviors: ListBuffer[BehaviorEntity] = ListBuffer()
@@ -30,4 +39,12 @@ object BehaviorEntity:
   def apply(name: String): BehaviorEntity =
     val nb = new BehaviorEntity(name)
     if GlobalProcessingState.isAgent then AgentEntity(nb)
+    else if GlobalProcessingState.isNoEntity then
+      GlobalProcessingState(nb) match
+        case Left(errMsg) =>
+          logger.error(errMsg)
+        case Right(value) =>
+          logger.info(s"Setting the global processing state to $value")
+          nb
+    else logger.error(s"Behavior $name cannot be defined within other entity ${GlobalProcessingState.getCurrentProcessingState}")
     nb
