@@ -159,6 +159,15 @@ class AgentEntity(val name: String) extends DialsEntity:
   def getCurrentState: Option[StateEntity] = currentState
   def checkIfStateExists(se:StateEntity): Boolean = states.toList.exists(s => s.name == se.name)
   def getResources: List[ResourceEntity] = resources.toList
+
+  infix def switch2(nextState: StateEntity): Unit =
+    require(nextState != null)
+    val currAgentState = AgentEntity.getCurrentAgentState
+    if currAgentState.isDefined then
+      logger.info(s"Switching from state ${currAgentState.get.name} to the state ${nextState.name} for the agent ${AgentEntity.getCurrentAgent}")
+      AgentEntity(currAgentState.get, nextState)
+      ()
+    else throw new IllegalStateException(s"The agent ${AgentEntity.getCurrentAgent} has no current state - totally impossible!")
   
   infix def joins(group: => GroupEntity): Unit =
     if GlobalProcessingState.isGroup then 
@@ -169,7 +178,6 @@ class AgentEntity(val name: String) extends DialsEntity:
     if GlobalProcessingState.isGroup then
       logger.error(s"The agent $name cannot leave a group because it's being defined as a member of a group")
     else group.removeAgent(this)
-
 
   infix def has[T](defAgent: => T): Unit =
     GlobalProcessingState(this) match
