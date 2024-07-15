@@ -8,7 +8,7 @@
 
 package GenericDefinitions
 
-import Utilz.CreateLogger
+import Utilz.{ConfigDb, CreateLogger}
 import org.slf4j.Logger
 
 import scala.collection.mutable.ListBuffer
@@ -31,6 +31,9 @@ class StateEntity(val name: String, val behaviors: ListBuffer[BehaviorEntity] = 
       case None =>
         throw new IllegalStateException(s"The agent ${AgentEntity.getCurrentAgent} has no current state - impossible!")
 
+  infix def periodic(timer: Tuple3[Int, Int, Int]): Unit =
+    if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Making the state $name periodic behavior for the agent ${AgentEntity.getCurrentAgent}")
+    AgentEntity(this, timer)
 
   infix def switch2[T](nextState: => StateEntity): Unit =
     require(nextState != null)

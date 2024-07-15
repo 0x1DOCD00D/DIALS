@@ -118,6 +118,14 @@ object AgentEntity:
     else
       agents.head.stateTransitions.put(stateEntityFrom, stateEntity2)
 
+  def apply(stateEntity: StateEntity, timer: Tuple3[Int,Int,Int]): Unit =
+    if agents.head.periodicBehaviors.contains(stateEntity) then
+      logger.warn(s"Periodic behavior for state $stateEntity already exists")
+      agents.head.periodicBehaviors(stateEntity) = timer
+    else
+      agents.head.periodicBehaviors.put(stateEntity, timer)
+
+
   def apply(action: BehaviorEntity): Unit =
     val lst = agents.toList
     if lst.isEmpty then throw new IllegalStateException(s"No agent is defined even though the behavior is specified: ${action.name}")
@@ -149,7 +157,7 @@ object AgentEntity:
         throw new IllegalStateException(s"No behavior is defined even though the trigger message is specified: ${msgTrigger.name}")
     else
       throw new IllegalStateException(s"No state is defined even though the trigger message is specified: ${msgTrigger.name}")
-  
+
 
   def apply(resourceEntity: ResourceEntity): Unit =
     if agents.isEmpty then throw new IllegalStateException(s"No agent is defined even though the resource is specified: ${resourceEntity.name}")
@@ -163,6 +171,7 @@ object AgentEntity:
 class AgentEntity(val name: String) extends DialsEntity:
   private val states: ListBuffer[StateEntity] = ListBuffer()
   private val stateTransitions: mutable.Map[StateEntity, StateEntity] = mutable.Map()
+  private val periodicBehaviors: mutable.Map[StateEntity, Tuple3[Int,Int,Int]] = mutable.Map()
   private val resources: ListBuffer[ResourceEntity] = ListBuffer()
   private var currentState: Option[StateEntity] = None
 
@@ -176,7 +185,9 @@ class AgentEntity(val name: String) extends DialsEntity:
       ( if stateTransitions.isEmpty then " and no state transitions\n"
         else s" and state transitions are ${stateTransitions.map{case (k, v) => s"${k.name} -> ${v.name}"}.mkString("; ")}")
     +
-      (if states.nonEmpty then states.toList.map(s => s"\nstate ${s.name}: " + s.behaviors.map(b=>b.toString()).mkString(" ")).mkString("\n") else "")
+      (if states.nonEmpty then states.toList.map(s => s"\nstate ${s.name}: " + s.behaviors.map(b=>b.toString()).mkString(" ")).mkString("\n") else "") +
+      (if periodicBehaviors.isEmpty then " and no periodic behaviors\n"
+        else s" and periodic behaviors are ${periodicBehaviors.map{case (k, v) => s"${k.name} -> ${v}"}.mkString("; ")}")
 
   def getStates: List[StateEntity] = states.toList
   def getCurrentState: Option[StateEntity] = currentState

@@ -109,4 +109,27 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
     GlobalProcessingState.resetAll()
   }
 
+  it should "generate one agent definition with a periodic behavior" in {
+    (agent process1) has {
+      (state st2) behaves {
+        (action b5) does {
+          println("b5 in s2")
+        } does {
+          val c = 2
+        } does {} triggeredBy {
+          (Keywords.message m1)
+          (Keywords.message m2)
+        } triggeredBy {
+          (Keywords.message m3)
+          (Keywords.message m4)
+          (Keywords.message m5)
+        }
+      } periodic (1, 2, -1)
+    }
+
+    logger.info(AgentEntity.toString)
+    AgentEntity().length shouldBe 1
+    GlobalProcessingState.resetAll()
+  }
+
 }
