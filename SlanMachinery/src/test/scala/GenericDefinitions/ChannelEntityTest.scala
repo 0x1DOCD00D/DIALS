@@ -41,7 +41,8 @@ class ChannelEntityTest extends AnyFlatSpec with Matchers {
     (channel c1) transports (Keywords.message m1)
     (channel c2) transports {
       (Keywords.message m1);
-      (Keywords.message m2);
+      (Keywords.message m2) triggers (action b1);
+      (Keywords.message m2) triggers (action b2);
       (Keywords.message m3)
     }
     (channel c3) transports (Keywords.message m10)

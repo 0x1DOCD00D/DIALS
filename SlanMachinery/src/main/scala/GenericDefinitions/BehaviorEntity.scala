@@ -88,4 +88,6 @@ object BehaviorEntity:
           val nb = new BehaviorEntity(name)
           behaviors.prependAll(List(nb))
           nb
+    else if GlobalProcessingState.isChannel then
+      new BehaviorEntity(name)
     else throw new IllegalStateException(s"Behavior $name cannot be defined within other entity ${GlobalProcessingState.getCurrentProcessingState}")

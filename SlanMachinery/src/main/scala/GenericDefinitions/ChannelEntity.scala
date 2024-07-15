@@ -24,7 +24,6 @@ class ChannelEntity private (val name: String, val messages: ListBuffer[(Message
           messages.map { case (m, b) => s"Message ${m.name} triggers behavior ${b.map(_.name).getOrElse("None")}" }.mkString("\n")
         )
 
-
   infix def transports[T](messages: => T): Unit =
     if GlobalProcessingState.isNoEntity then
       GlobalProcessingState(this) match

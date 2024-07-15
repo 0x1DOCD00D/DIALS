@@ -22,7 +22,7 @@ object StateEntity:
 class StateEntity(val name: String, val behaviors: ListBuffer[BehaviorEntity] = ListBuffer()) extends DialsEntity:
   private val logger = CreateLogger(classOf[StateEntity])
 
-  override def toString: String = 
+  override def toString: String =
     s"StateEntity($name, ${behaviors.map(_.toString).mkString})"
 
   infix def behaves(defBehavior: Unit): StateEntity =
