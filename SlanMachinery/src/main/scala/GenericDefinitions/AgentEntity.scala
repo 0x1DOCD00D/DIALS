@@ -187,7 +187,7 @@ class AgentEntity(val name: String) extends DialsEntity:
     +
       (if states.nonEmpty then states.toList.map(s => s"\nstate ${s.name}: " + s.behaviors.map(b=>b.toString()).mkString(" ")).mkString("\n") else "") +
       (if periodicBehaviors.isEmpty then " and no periodic behaviors\n"
-        else s" and periodic behaviors are ${periodicBehaviors.map{case (k, v) => s"${k.name} -> ${v}"}.mkString("; ")}")
+        else s" and periodic behaviors are ${periodicBehaviors.map{case (k, v) => s"${k.name} -> $v"}.mkString("; ")}")
 
   def getStates: List[StateEntity] = states.toList
   def getCurrentState: Option[StateEntity] = currentState
