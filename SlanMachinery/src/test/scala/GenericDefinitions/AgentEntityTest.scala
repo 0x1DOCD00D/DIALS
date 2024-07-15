@@ -132,4 +132,35 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
     GlobalProcessingState.resetAll()
   }
 
+  it should "create agents that can be auto triggered to start a simulation" in {
+    (agent process1) has {
+      (state st1) behaves {
+        (action b1);
+        (action b2)
+      } switch2 (state st2);
+
+      (state st2) behaves {
+        (action b5) does {
+          println("b5 in s2")
+        } does {
+          val c = 2
+        } does {}
+      } switch2 (state st1)
+    } autotrigger (state st1);
+
+    (agent process2) has {}
+
+    (agent process3) has {
+      (state _SingleState) behaves {
+      };
+      (state WrongState) behaves {
+        ()
+      };
+    }
+
+    logger.info(AgentEntity.toString)
+    AgentEntity.autoTriggeredAgents().toList.map((a: AgentEntity, s:StateEntity) => (a.name, s.name)) shouldBe List(("process1", "st1")) 
+    GlobalProcessingState.resetAll()
+  }
+
 }
