@@ -22,13 +22,13 @@ object GlobalProcessingState:
   def isNoEntity: Boolean = currentProcessingState == NoEntity
   def getCurrentProcessingState: String = currentProcessingState.getClass.getSimpleName
 
-  def resetAll: Unit = 
+  def resetAll(): Unit = 
     currentProcessingState = NoEntity
-    AgentEntity.resetAll
-    ResourceEntity.resetAll
-    GroupEntity.resetAll
-    MessageEntity.resetAll
-    ChannelEntity.resetAll
+    AgentEntity.resetAll()
+    ResourceEntity.resetAll()
+    GroupEntity.resetAll()
+    MessageEntity.resetAll()
+    ChannelEntity.resetAll()
     
   def apply(state: DialsEntity): Either[String, DialsEntity] =
     state match

@@ -42,6 +42,6 @@ class GroupEntityTest extends AnyFlatSpec with Matchers {
     }
     logger.info(GroupEntity.toString)
     GroupEntity() shouldBe List("g2", "g1")
-    GlobalProcessingState.resetAll
+    GlobalProcessingState.resetAll()
   }
 }

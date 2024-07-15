@@ -60,7 +60,7 @@ object MessageEntity:
 
   override def toString: String = allMessages.map(_.toString).mkString("\n")
 
-  def resetAll: Unit = allMessages.clear()
+  def resetAll(): Unit = allMessages.clear()
   
   def apply(): List[String] = allMessages.map(_.name).toList
 

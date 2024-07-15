@@ -68,7 +68,7 @@ object AgentEntity:
   override def toString: String =
     s"All agents: ${agents.toList.map(_.name)} with the following breakdown:\n" + agents.map(_.toString).mkString(";\n\n")
 
-  def resetAll: Unit = agents.clear()
+  def resetAll(): Unit = agents.clear()
 
   def apply(): List[String] = agents.map(_.name).toList
 

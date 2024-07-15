@@ -17,8 +17,8 @@ case object EmptyBehavior extends BehaviorEntity("EmptyBehavior")
 
 class BehaviorEntity(val name: String, val triggerMsgs: ListBuffer[MessageEntity] = ListBuffer(), val actualActions: ListBuffer[() => Unit] = ListBuffer()) extends DialsEntity:
   override def toString: String = s"$name " 
-    + (if !actualActions.isEmpty then s"has ${actualActions.toList.length} actions" else "is empty")
-    + (if !triggerMsgs.isEmpty then s" and is triggered by ${triggerMsgs.toList.length} messages" else " and it's triggered by all messages")
+    + (if actualActions.nonEmpty then s"has ${actualActions.toList.length} actions" else "is empty")
+    + (if triggerMsgs.nonEmpty then s" and is triggered by ${triggerMsgs.toList.length} messages" else " and it's triggered by all messages")
   
   infix def triggeredBy(msgs: => MessageEntity): BehaviorEntity =
     if GlobalProcessingState.isNoEntity then

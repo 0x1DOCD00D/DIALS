@@ -30,7 +30,7 @@ class MessageEntityTest extends AnyFlatSpec with Matchers {
     (Keywords.message m2) := (20, 30)
     logger.info(MessageEntity.toString)
     MessageEntity() shouldBe List("m2", "m1")
-    GlobalProcessingState.resetAll
+    GlobalProcessingState.resetAll()
   }
 
   it should "generate message definitions with fields" in {
@@ -44,14 +44,14 @@ class MessageEntityTest extends AnyFlatSpec with Matchers {
     }
     logger.info(MessageEntity.toString)
     MessageEntity() shouldBe List("m2", "m1")
-    GlobalProcessingState.resetAll
+    GlobalProcessingState.resetAll()
   }
 
   it should "put a message into channels" in {
     ((Keywords.message m1) send ((channel c1), (channel c2), (channel c3))).map {
       case (m, c) => (m.name, c.map(_.name).mkString(", ")  )
     }.toList shouldBe List(("m1", "c1, c2, c3"))
-    GlobalProcessingState.resetAll
+    GlobalProcessingState.resetAll()
   }
 
 

@@ -46,7 +46,7 @@ object ChannelEntity:
 
   override def toString: String = allChannels.map(_.toString).mkString("\n")
 
-  def resetAll: Unit = allChannels.clear()
+  def resetAll(): Unit = allChannels.clear()
 
   def apply(): List[String] = allChannels.map(_.name).toList
 

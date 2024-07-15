@@ -34,7 +34,7 @@ object GroupEntity:
   private val logger = CreateLogger(classOf[GroupEntity])
   private var groups: ListBuffer[GroupEntity] = ListBuffer()
   
-  def resetAll: Unit = groups.clear()
+  def resetAll(): Unit = groups.clear()
   
   def apply(name: String): GroupEntity = 
     val newG = new GroupEntity(name)

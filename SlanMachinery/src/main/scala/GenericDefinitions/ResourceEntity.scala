@@ -58,7 +58,7 @@ object ResourceEntity:
 
   override def toString: String = topLevelResources.map(_.toString).mkString("\n")
 
-  def resetAll: Unit = 
+  def resetAll(): Unit = 
     topLevelResources.clear()
     containerResourcesStack.clear()
     

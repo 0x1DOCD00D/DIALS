@@ -41,7 +41,7 @@ class BehaviorEntityTest extends AnyFlatSpec with Matchers {
 
     logger.info(BehaviorEntity.toString)
     BehaviorEntity().length shouldBe 1
-    GlobalProcessingState.resetAll
+    GlobalProcessingState.resetAll()
   }
 
 }

@@ -52,7 +52,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
     }
     logger.info(AgentEntity.toString)
     AgentEntity() shouldBe List("process3", "process2", "process1")
-    GlobalProcessingState.resetAll
+    GlobalProcessingState.resetAll()
   }
 
   it should "generate three agent definitions" in {
@@ -83,7 +83,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
 
     logger.info(AgentEntity.toString)
     AgentEntity().head shouldBe "process3"
-    GlobalProcessingState.resetAll
+    GlobalProcessingState.resetAll()
   }
 
   it should "generate one agent definition with multiple actions" in {
@@ -106,7 +106,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
 
     logger.info(AgentEntity.toString)
     AgentEntity().length shouldBe 1
-    GlobalProcessingState.resetAll
+    GlobalProcessingState.resetAll()
   }
 
 }

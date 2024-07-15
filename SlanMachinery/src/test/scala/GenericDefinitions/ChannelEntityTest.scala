@@ -34,7 +34,7 @@ class ChannelEntityTest extends AnyFlatSpec with Matchers {
     (channel c5)
     logger.info(ChannelEntity.toString)
     ChannelEntity() shouldBe List("c5", "c4", "c3", "c3", "c2", "c1")
-    GlobalProcessingState.resetAll
+    GlobalProcessingState.resetAll()
   }
 
   it should "generate message definitions with messages" in {
@@ -47,7 +47,7 @@ class ChannelEntityTest extends AnyFlatSpec with Matchers {
     (channel c3) transports (Keywords.message m10)
     logger.info(ChannelEntity.toString)
     ChannelEntity() shouldBe List("c3", "c2", "c1")
-    GlobalProcessingState.resetAll
+    GlobalProcessingState.resetAll()
   }
 
   it should "generate message definitions with messages and behaviors" in {
@@ -60,6 +60,6 @@ class ChannelEntityTest extends AnyFlatSpec with Matchers {
     (channel c3) transports (Keywords.message m10)
     logger.info(ChannelEntity.toString)
     ChannelEntity() shouldBe List("c3", "c2", "c1")
-    GlobalProcessingState.resetAll
+    GlobalProcessingState.resetAll()
   }
 }
