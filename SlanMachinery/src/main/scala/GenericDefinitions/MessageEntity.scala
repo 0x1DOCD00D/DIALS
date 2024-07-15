@@ -74,5 +74,9 @@ object MessageEntity:
     val newMsg = new MessageEntity(name)
     if GlobalProcessingState.isChannel then
       ChannelEntity(newMsg)
+    if GlobalProcessingState.isAgent then
+      AgentEntity(newMsg)
+    if GlobalProcessingState.isBehavior then
+      BehaviorEntity(newMsg)
     else allMessages.prependAll(List(newMsg))
     newMsg

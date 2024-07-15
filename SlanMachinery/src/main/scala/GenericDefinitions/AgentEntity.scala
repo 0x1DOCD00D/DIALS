@@ -50,12 +50,12 @@ import scala.language.postfixOps
 * states with behaviors and their transitions. The initial state is designated with the case object InitialState and the transitions are defined
 * using the method, transitions. Some behaviors may be defined locally within the block of code inside the block of code that is passed to the method, has.
 * Once a block of code is passed to the method has it is executed and a state machine is extracted. That is, each (state <name>) entry is executed
-* and it creates an object of the type StateEntity that is populated with the information about the behavior in this state that is passed to the method, behaves. 
-* The orchestration of this evaluation ensures that the context reference is never modified concurrently, but only in timed sequence of the execution steps. 
-* That is, when (agent process1) is executed it creates an object of AgentEntity and makes it the current top context agent in the AgentEntity object.  
+* and it creates an object of the type StateEntity that is populated with the information about the behavior in this state that is passed to the method, behaves.
+* The orchestration of this evaluation ensures that the context reference is never modified concurrently, but only in timed sequence of the execution steps.
+* That is, when (agent process1) is executed it creates an object of AgentEntity and makes it the current top context agent in the AgentEntity object.
 * Next, the method has is called and it executes the block of code that is passed to it. Each entry in this block of code declares either a state
 * or a resource. Executing each entry creates an object of either StateEntity or ResourceEntity and populates it with the information about this entity
-* just like it is done with the object of AgentEntity. 
+* just like it is done with the object of AgentEntity.
 * One frequently used solution is a special combinator, usually ~ that combines different entities in a single context, e.g., a list that does
 * the elements that are representations of these entities. The problem is to make sure that all keywords and blocks of code that finish a declarative
 * statement result in an object of the type that implements the method ~. Using semicolon seems to be a natural way to combine declarations.
@@ -65,13 +65,13 @@ object AgentEntity:
   private val logger = CreateLogger(classOf[AgentEntity])
   private val agents: ListBuffer[AgentEntity] = ListBuffer()
 
-  override def toString: String = 
+  override def toString: String =
     s"All agents: ${agents.toList.map(_.name)} with the following breakdown:\n" + agents.map(_.toString).mkString(";\n\n")
 
   def resetAll: Unit = agents.clear()
-  
+
   def apply(): List[String] = agents.map(_.name).toList
-  
+
   def apply(name: String): AgentEntity =
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Creating an agent entity named $name")
     val found = agents.toList.find(a => a.name == name)
@@ -91,13 +91,13 @@ object AgentEntity:
       agent
 
   def joinGroup(a: AgentEntity): Unit = if GlobalProcessingState.isGroup then GroupEntity(a)
-  
+
   def getState(name: String): Option[StateEntity] = agents.headOption.flatMap(_.getStates.find(s => s.name == name))
-  
+
   def apply(stateEntity: StateEntity): Unit =
     logger.info(s"Creating a state entity for agent ${agents.head.name}: ${stateEntity.toString}")
-    val lst = agents.toList 
-    if lst.isEmpty then 
+    val lst = agents.toList
+    if lst.isEmpty then
       throw new IllegalStateException(s"No agent is defined even though the state is specified: ${stateEntity.name}")
     else if !lst.head.states.exists(s => s.name == stateEntity.name) then
       logger.info(s"Creating the state ${stateEntity.name} under the agent ${lst.head.name}")
@@ -113,7 +113,7 @@ object AgentEntity:
     if agents.head.stateTransitions.contains(stateEntityFrom) then
       if agents.head.stateTransitions(stateEntityFrom) == stateEntity2 then
         logger.warn(s"Transition from state $stateEntityFrom to state $stateEntity2 already exists")
-      else  
+      else
         agents.head.stateTransitions(stateEntityFrom) = stateEntity2
     else
       agents.head.stateTransitions.put(stateEntityFrom, stateEntity2)
@@ -123,11 +123,34 @@ object AgentEntity:
     if lst.isEmpty then throw new IllegalStateException(s"No agent is defined even though the behavior is specified: ${action.name}")
     else if agents.head.currentState.isDefined then
       val state = agents.head.currentState.get
-      logger.info(s"Creating a behavior entity named ${action.name} under the agent ${lst.head.name} for its state ${state.name}")
-      AgentEntity(new StateEntity(state.name, action :: state.behaviors))
+      state.behaviors.find(b => b.name == action.name) match
+        case Some(b) =>
+          if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Behavior ${action.name} already exists in the state ${state.name} of the agent ${lst.head.name}")
+          b.triggerMsgs.prependAll(action.triggerMsgs)
+          b.actualActions.prependAll(action.actualActions)
+          if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Behavior ${action.name} is updated with ${action.triggerMsgs.toList.length} trigger messages and ${action.actualActions.toList.length} actions")
+          if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Behavior ${b.name} contains ${b.triggerMsgs.toList.length} trigger messages and ${b.actualActions.toList.length} actions")
+        case None =>
+          if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Creating a behavior entity named ${action.name} under the agent ${lst.head.name} for its state ${state.name}")
+          state.behaviors.prependAll(List(action))
     else
       throw new IllegalStateException(s"No state is defined even though the behavior is specified: ${action.name}")
+
+  def apply(msgTrigger: MessageEntity): Unit =
+    val lst = agents.toList
+    if lst.isEmpty then throw new IllegalStateException(s"No agent is defined even though the trigger message is specified: ${msgTrigger.name}")
+    else if agents.head.currentState.isDefined then
+      val state = agents.head.currentState.get
+      val beh = state.behaviors.headOption
+      if beh.isDefined then
+        logger.info(s"Triggering message ${msgTrigger.name} for the behavior ${beh.get.name} under the agent ${lst.head.name} for its state ${state.name}")
+        beh.get.triggerMsgs.prependAll(List(msgTrigger))
+      else
+        throw new IllegalStateException(s"No behavior is defined even though the trigger message is specified: ${msgTrigger.name}")
+    else
+      throw new IllegalStateException(s"No state is defined even though the trigger message is specified: ${msgTrigger.name}")
   
+
   def apply(resourceEntity: ResourceEntity): Unit =
     if agents.isEmpty then throw new IllegalStateException(s"No agent is defined even though the resource is specified: ${resourceEntity.name}")
     else
@@ -136,7 +159,7 @@ object AgentEntity:
 
   def getCurrentAgent: Option[String] = agents.headOption.map(_.name)
   def getCurrentAgentState: Option[StateEntity] = agents.headOption.flatMap(_.getCurrentState)
-  
+
 class AgentEntity(val name: String) extends DialsEntity:
   private val states: ListBuffer[StateEntity] = ListBuffer()
   private val stateTransitions: mutable.Map[StateEntity, StateEntity] = mutable.Map()
@@ -145,10 +168,10 @@ class AgentEntity(val name: String) extends DialsEntity:
 
   override def toString: String =
     (if states.isEmpty then s"Agent $name has no states"
-    else 
+    else
       if states.isEmpty then s"Agent $name has no states" else s"Agent $name has states: ${states.map(_.name).mkString(", ")}")
-    + (if resources.isEmpty then " and no resources" 
-        else s" and resources are ${resources.map(_.name).mkString}") 
+    + (if resources.isEmpty then " and no resources"
+        else s" and resources are ${resources.map(_.name).mkString}")
     +
       ( if stateTransitions.isEmpty then " and no state transitions\n"
         else s" and state transitions are ${stateTransitions.map{case (k, v) => s"${k.name} -> ${v.name}"}.mkString("; ")}")
@@ -168,9 +191,9 @@ class AgentEntity(val name: String) extends DialsEntity:
       AgentEntity(currAgentState.get, nextState)
       ()
     else throw new IllegalStateException(s"The agent ${AgentEntity.getCurrentAgent} has no current state - totally impossible!")
-  
+
   infix def joins(group: => GroupEntity): Unit =
-    if GlobalProcessingState.isGroup then 
+    if GlobalProcessingState.isGroup then
       logger.error(s"The agent $name cannot join a group because it is already a member of a group")
     else group.comprises(this)
 
@@ -182,7 +205,7 @@ class AgentEntity(val name: String) extends DialsEntity:
   infix def has[T](defAgent: => T): Unit =
     GlobalProcessingState(this) match
       case Left(errorMsg) => logger.error(errorMsg)
-      case Right(obj) => 
+      case Right(obj) =>
         defAgent
         GlobalProcessingState(NoEntity) match
           case Left(errMsg) => logger.error(errMsg)

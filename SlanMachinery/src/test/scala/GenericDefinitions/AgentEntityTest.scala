@@ -63,14 +63,18 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
       } switch2 (state st2);
 
       (state st2) behaves {
-        (action b5) does {}
+        (action b5) does {
+          println("b5 in s2")
+        } does {
+          val c = 2
+        } does { }
       } switch2 (state st1)
     }
 
     (agent process2) has {}
 
     (agent process3) has {
-      SingleState behaves {
+      (state _SingleState) behaves {
       };
       (state WrongState) behaves {
         ()
@@ -81,4 +85,28 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
     AgentEntity().head shouldBe "process3"
     GlobalProcessingState.resetAll
   }
+
+  it should "generate one agent definition with multiple actions" in {
+    (agent process1) has {
+      (state st2) behaves {
+        (action b5) does {
+          println("b5 in s2")
+        } does {
+          val c = 2
+        } does { } triggeredBy  {
+          (Keywords.message m1)
+          (Keywords.message m2)
+        } triggeredBy {
+          (Keywords.message m3)
+          (Keywords.message m4)
+          (Keywords.message m5)
+        }
+      } switch2 (state st1)
+    }
+
+    logger.info(AgentEntity.toString)
+    AgentEntity().length shouldBe 1
+    GlobalProcessingState.resetAll
+  }
+
 }

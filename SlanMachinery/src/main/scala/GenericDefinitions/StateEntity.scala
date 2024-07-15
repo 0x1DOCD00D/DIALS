@@ -19,12 +19,7 @@ object StateEntity:
     AgentEntity(newState)
     newState
 
-case object SingleState extends StateEntity("SingleState"):
-  val logger: Logger = CreateLogger(classOf[SingleState.type])
-  logger.info("Single state is created")
-  AgentEntity(SingleState)
-  
-class StateEntity(val name: String, val behaviors: List[BehaviorEntity] = List()) extends DialsEntity:
+class StateEntity(val name: String, val behaviors: ListBuffer[BehaviorEntity] = ListBuffer()) extends DialsEntity:
   private val logger = CreateLogger(classOf[StateEntity])
 
   override def toString: String = 

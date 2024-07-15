@@ -18,6 +18,7 @@ object GlobalProcessingState:
   def isAgent: Boolean = currentProcessingState.isInstanceOf[AgentEntity]
   def isMessage: Boolean = currentProcessingState.isInstanceOf[MessageEntity]
   def isResource: Boolean = currentProcessingState.isInstanceOf[ResourceEntity]
+  def isBehavior: Boolean = currentProcessingState.isInstanceOf[BehaviorEntity]
   def isNoEntity: Boolean = currentProcessingState == NoEntity
   def getCurrentProcessingState: String = currentProcessingState.getClass.getSimpleName
 
@@ -31,6 +32,9 @@ object GlobalProcessingState:
     
   def apply(state: DialsEntity): Either[String, DialsEntity] =
     state match
+      case a: BehaviorEntity if currentProcessingState == NoEntity =>
+        currentProcessingState = a
+        Right(currentProcessingState)
       case a: ChannelEntity if currentProcessingState == NoEntity =>
         currentProcessingState = a
         Right(currentProcessingState)
