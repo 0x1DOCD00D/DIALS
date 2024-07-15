@@ -20,7 +20,7 @@ class ChannelEntity private (val name: String, val messages: ListBuffer[(Message
     s"channel $name" +
       (if messages.isEmpty then " transports all types of messages"
       else
-        (s" can trasports only the messages of the following types: ${messages.map(_._1.name).mkString(", ")}\n") +
+        s" can trasports only the messages of the following types: ${messages.map(_._1.name).mkString(", ")}\n" +
           messages.map { case (m, b) => s"Message ${m.name} triggers behavior ${b.map(_.name).getOrElse("None")}" }.mkString("\n")
         )
 

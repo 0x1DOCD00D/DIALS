@@ -64,6 +64,8 @@ object BehaviorEntity:
 
   override def toString: String = behaviors.map(_.toString).mkString("\n")
 
+  def resetAll(): Unit = behaviors.clear()
+
   def apply(): List[String] = behaviors.map(_.name).toList
   
   def apply(msg: MessageEntity): Unit =

@@ -29,6 +29,7 @@ object GlobalProcessingState:
     GroupEntity.resetAll()
     MessageEntity.resetAll()
     ChannelEntity.resetAll()
+    BehaviorEntity.resetAll()
     
   def apply(state: DialsEntity): Either[String, DialsEntity] =
     state match

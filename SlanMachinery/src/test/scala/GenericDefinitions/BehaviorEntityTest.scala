@@ -44,4 +44,45 @@ class BehaviorEntityTest extends AnyFlatSpec with Matchers {
     GlobalProcessingState.resetAll()
   }
 
+  it should "generate diverse behavior definitions" in {
+    (action b1);
+    (action b2) does {
+      println("b2 in s1")
+    };
+    (action b3) does {
+      println("b3 in s1")
+    } does {
+      println("b3 in s2")
+    } triggeredBy {
+      (Keywords.message m1)
+      (Keywords.message m2)
+    } triggeredBy {
+      (Keywords.message m3)
+      (Keywords.message m4)
+      (Keywords.message m5)
+    }
+    (action b4) triggeredBy {
+      (Keywords.message m1)
+      (Keywords.message m2)
+    } triggeredBy {
+      (Keywords.message m3)
+      (Keywords.message m4)
+      (Keywords.message m5)
+    }
+    (action b5) triggeredBy {
+      (Keywords.message m1)
+      (Keywords.message m2)
+    } does {
+      println("b4 in s1")
+    } triggeredBy {
+      (Keywords.message m3)
+      (Keywords.message m4)
+      (Keywords.message m5)
+    }
+    logger.info(BehaviorEntity.toString)
+    BehaviorEntity().length shouldBe 5
+    GlobalProcessingState.resetAll()
+
+  }
+
 }
