@@ -18,4 +18,5 @@ object Keywords:
   val resource = new KeywordTemplate(classOf[ResourceEntity])
   val message = new KeywordTemplate(classOf[MessageEntity])
   val field = new KeywordTemplate(classOf[FieldEntity])
+  val model = new KeywordTemplate(classOf[ModelEntity])
   val pdf = new KeywordTemplate(classOf[DistributionEntity])

@@ -28,6 +28,7 @@ class KeywordTemplate[T <: DialsEntity](classType: Class[T]) extends Dynamic {
     else if classType == classOf[ChannelEntity] then ChannelEntity(name).asInstanceOf[T]
     else if classType == classOf[GroupEntity] then GroupEntity(name).asInstanceOf[T]
     else if classType == classOf[MessageEntity] then MessageEntity(name).asInstanceOf[T]
+    else if classType == classOf[ModelEntity] then ModelEntity(name).asInstanceOf[T]
     else if classType == classOf[FieldEntity] then FieldEntity(name).asInstanceOf[T]
     else if classType == classOf[StateEntity] then
       if AgentEntity.getState(name).isDefined then AgentEntity.getState(name).get.asInstanceOf[T]

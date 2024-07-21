@@ -79,7 +79,7 @@ object AgentEntity:
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Creating an agent entity named $name")
     val found = agents.toList.find(a => a.name == name)
     if found.isDefined then
-      logger.error(s"Agent $name already exists. Adding more definitions to the existing agent.")
+      if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Agent $name is already defined.")
       val agt = found.get
       val (l, r) = agents.partition(a => a.name == name)
       agents.clear()

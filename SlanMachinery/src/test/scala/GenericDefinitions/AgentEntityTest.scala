@@ -150,16 +150,15 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
 
     (agent process2) has {}
 
-    (agent process3) has {
+    (agent process3) has:
       (state _SingleState) behaves {
       };
       (state WrongState) behaves {
         ()
       };
-    }
 
     logger.info(AgentEntity.toString)
-    AgentEntity.autoTriggeredAgents().toList.map((a: AgentEntity, s:StateEntity) => (a.name, s.name)) shouldBe List(("process1", "st1")) 
+    AgentEntity.autoTriggeredAgents().toList.map((a: AgentEntity, s:StateEntity) => (a.name, s.name)) shouldBe List(("process1", "st1"))
     GlobalProcessingState.resetAll()
   }
 

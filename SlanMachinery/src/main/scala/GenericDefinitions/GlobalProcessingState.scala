@@ -33,6 +33,9 @@ object GlobalProcessingState:
     
   def apply(state: DialsEntity): Either[String, DialsEntity] =
     state match
+      case a: ModelEntity if currentProcessingState == NoEntity =>
+        currentProcessingState = a
+        Right(currentProcessingState)
       case a: BehaviorEntity if currentProcessingState == NoEntity =>
         currentProcessingState = a
         Right(currentProcessingState)
