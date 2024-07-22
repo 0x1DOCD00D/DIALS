@@ -1,8 +1,8 @@
 /*
  * Copyright (newConnection) 7/16/24, 9:22 AM, 16. Mark Grechanik and Lone Star Consulting, Inc. All rights reserved.
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  
+ *
  *  See the License for the specific language governing permissions and limitations under the License.
  */
 
@@ -25,14 +25,76 @@ class ModelEntityTest extends AnyFlatSpec with Matchers {
   val logger: Logger = CreateLogger(classOf[GroupEntityTest])
   behavior of "model entities"
 
-  it should "generate a model definition" in {
+  it should "generate a model definition with three connected agents" in {
     (model m1) `is defined as` {
       (agent a1) <~> (channel c1) <~> (agent a2);
       (agent a2) ~> (channel c2) ~> (agent a3);
       (agent a3) <~ (channel c3) <~ (agent a1)
     }
     logger.info(ModelEntity.toString)
-    ModelEntity() shouldBe List("m1")
+    ModelEntity().map(_.name) shouldBe List("m1")
     ModelEntity.resetAll()
   }
+
+  it should "generate a model definition with partial connections" in {
+    (model m2) `is defined as` {
+      (agent a1) <~> (channel c1) <~> (agent a2);
+      (agent a2) ~> (channel c2);
+      (agent a3) <~ (channel c3) <~ (agent a1)
+    }
+    logger.info(ModelEntity.toString)
+    val modelList = ModelEntity()
+    modelList.head.connections.filter(_.isInstanceOf[PartialConnection]).size shouldBe 1
+    modelList.head.connections.filter(_.isInstanceOf[CompleteConnection]).size shouldBe 2
+    modelList.head.connections.size shouldBe 3
+    modelList.map(_.name) shouldBe List("m2")
+    ModelEntity.resetAll()
+  }
+
+  it should "generate a model definition with one partial connection and two extended connections" in {
+    (model m2) `is defined as` {
+      (agent a1) <~> (channel c1) <~> (agent a2) <~> (channel c4) <~> (agent a3);
+      (agent a1) <~> (channel c1) <~> (agent a2) <~ (channel c4) <~ (agent a3);
+      (agent a2) ~> (channel c2);
+      (agent a3) <~ (channel c3) <~ (agent a1)
+    }
+    logger.info(ModelEntity.toString)
+    val modelList = ModelEntity()
+    modelList.head.connections.filter(_.isInstanceOf[PartialConnection]).size shouldBe 1
+    modelList.head.connections.filter(_.isInstanceOf[CompleteConnection]).size shouldBe 5
+    modelList.head.connections.size shouldBe 6
+    modelList.map(_.name) shouldBe List("m2")
+    ModelEntity.resetAll()
+  }
+
+  it should "generate a model definition with one partial connection and three extended connections" in {
+    (model m2) `is defined as` {
+      (agent a1) <~> (channel c1) <~> (agent a2) <~> (channel c4) <~> (agent a3);
+      ((agent a1) <~> (channel c1) <~> (agent a2)) ~> (channel c4) ~> (agent a3);
+      (agent a1) <~> (channel c1) <~> (agent a2) <~ (channel c4) <~ (agent a3);
+      (agent a2) ~> (channel c2);
+      (agent a3) <~ (channel c3) <~ (agent a1)
+    }
+    logger.info(ModelEntity.toString)
+    val modelList = ModelEntity()
+    modelList.head.connections.filter(_.isInstanceOf[PartialConnection]).size shouldBe 1
+    modelList.head.connections.filter(_.isInstanceOf[CompleteConnection]).size shouldBe 5
+    modelList.head.connections.size shouldBe 6
+    modelList.map(_.name) shouldBe List("m2")
+    ModelEntity.resetAll()
+  }
+
+  it should "generate a model definition with a long chain" in {
+    (model m3) `is defined as` {
+      (((agent a1) <~> (channel c1) <~> (agent a2)) <~> (channel c4) <~> (agent a3)) ~> (channel c5) ~> (agent a4) <~ (channel c6) <~ (agent a1);
+    }
+    logger.info(ModelEntity.toString)
+    val modelList = ModelEntity()
+    modelList.head.connections.filter(_.isInstanceOf[PartialConnection]).size shouldBe 0
+    modelList.head.connections.filter(_.isInstanceOf[CompleteConnection]).size shouldBe 4
+    modelList.head.connections.size shouldBe 4
+    modelList.map(_.name) shouldBe List("m3")
+    ModelEntity.resetAll()
+  }
+
 }

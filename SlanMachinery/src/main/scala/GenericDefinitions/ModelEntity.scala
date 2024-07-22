@@ -68,7 +68,7 @@ object ModelEntity:
       modelEntities.head.addConnection(_currentChain)
       _currentChain = EmptyConnection
 
-  def apply(): List[String] = modelEntities.map(_.name).toList
+  def apply(): List[ModelEntity] = modelEntities.toList
 
   def apply(name: String): ModelEntity =
     val found = modelEntities.toList.find(_.name == name)

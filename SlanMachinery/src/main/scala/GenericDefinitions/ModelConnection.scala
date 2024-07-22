@@ -9,6 +9,7 @@
 package GenericDefinitions
 
 import GenericDefinitions.ModelEntity.DIRECTION.{BIDIRECTIONAL, LEFT2RIGHT, RIGHT2LEFT}
+import GenericDefinitions.ModelEntity.createPartialConnection
 
 trait Connection
 
@@ -37,4 +38,8 @@ case class LeftDirectional(to: ModelGraphNode, channel: ModelGraphEdge) extends 
     cc
 
 
-case class CompletedChain(from: ModelGraphNode, to: ModelGraphNode, channel: ModelGraphEdge, d: ModelEntity.DIRECTION) extends CompleteConnection
+case class CompletedChain(from: ModelGraphNode, to: ModelGraphNode, channel: ModelGraphEdge, d: ModelEntity.DIRECTION) extends CompleteConnection:
+  infix def <~>(c: ModelGraphEdge): BiDirectionalConnection = createPartialConnection(to, c, BIDIRECTIONAL).asInstanceOf[BiDirectionalConnection]
+  infix def ~>(c: ModelGraphEdge): RightDirectional = createPartialConnection(to, c, LEFT2RIGHT).asInstanceOf[RightDirectional]
+  infix def <~(c: ModelGraphEdge): LeftDirectional = createPartialConnection(to, c, RIGHT2LEFT).asInstanceOf[LeftDirectional]
+
