@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 7/15/24, 9:14 AM, 15. Mark Grechanik and Lone Star Consulting, Inc. All rights reserved.
+ * Copyright (newConnection) 7/15/24, 9:14 AM, 15. Mark Grechanik and Lone Star Consulting, Inc. All rights reserved.
  *
  *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *
@@ -47,20 +47,29 @@ object ModelEntity:
 
   override def toString: String = modelEntities.map(_.toString).mkString("\n")
 
-  def currentChain: Connection = _currentChain
-  def currentChain_=(c: Connection): Unit = 
-    if modelEntities.isEmpty then throw new IllegalStateException("ModelEntity is in an invalid state: modelEntities is empty")
-    else if c.isInstanceOf[CompletedChain] then 
-      modelEntities.head.addConnection(_currentChain)  
-      _currentChain = c
-    else if c.isInstanceOf[PartialConnection] then
-      _currentChain = c
-    else
-      modelEntities.head.addConnection(_currentChain)  
-      _currentChain = EmptyConnection
-    
-  def apply(): List[String] = modelEntities.map(_.name).toList
+  def resetConnectionChain(): Unit = _currentChain = EmptyConnection
   
+  def currentChain: Connection = _currentChain
+
+  def currentChain_=(newConnection: Connection): Unit =
+    if modelEntities.isEmpty then throw new IllegalStateException("ModelEntity is in an invalid state: there is no model entity to add the connection to.")
+    else if currentChain == EmptyConnection && newConnection.isInstanceOf[PartialConnection] then
+      _currentChain = newConnection
+    else if currentChain.isInstanceOf[PartialConnection] && newConnection.isInstanceOf[CompletedChain] then
+      _currentChain = newConnection
+      modelEntities.head.addConnection(newConnection)
+    else if currentChain.isInstanceOf[PartialConnection] && newConnection.isInstanceOf[PartialConnection] then
+      if ConfigDb.`DIALS.General.debugMode` then logger.error(s"ModelEntity is in an invalid state: $currentChain when switching to the new state $newConnection. Discarding this chain, resetting and continuing...")
+      modelEntities.head.addConnection(currentChain)
+      _currentChain = newConnection
+    else if currentChain.isInstanceOf[CompletedChain] && (newConnection == EmptyConnection || newConnection.isInstanceOf[PartialConnection]) then
+      _currentChain = newConnection
+    else
+      modelEntities.head.addConnection(_currentChain)
+      _currentChain = EmptyConnection
+
+  def apply(): List[String] = modelEntities.map(_.name).toList
+
   def apply(name: String): ModelEntity =
     val found = modelEntities.toList.find(_.name == name)
     if found.isEmpty then
@@ -76,43 +85,30 @@ object ModelEntity:
 
   enum DIRECTION:
     case LEFT2RIGHT, RIGHT2LEFT, BIDIRECTIONAL
-    
-  def createPartialConnection(cc: CompleteConnection, c: ModelGraphEdge, d: DIRECTION): PartialConnection =
-    if ModelEntity.currentChain != EmptyConnection then
-      logger.error(s"ModelEntity is in an invalid state: ${ModelEntity.currentChain.toString}. Discarding this chain, resetting and continuing...")
-      currentChain = EmptyConnection
 
+  def createPartialConnection(cc: CompleteConnection, c: ModelGraphEdge, d: DIRECTION): PartialConnection =
     currentChain = cc match
-      case CompletedChain(left, right, channel, direction) => 
+      case CompletedChain(left, right, channel, direction) =>
         direction match
           case BIDIRECTIONAL => BiDirectionalConnection(right, c)
           case LEFT2RIGHT => RightDirectional(right, c)
           case RIGHT2LEFT => LeftDirectional(left, c)
       case BadConnection(_) => CannotBuildPartialConnection
     currentChain.asInstanceOf[PartialConnection]
-      
-  def createPartialConnection(a: ModelGraphNode, c: ModelGraphEdge, d: DIRECTION): PartialConnection =
-    if ModelEntity.currentChain != EmptyConnection then
-      logger.error(s"ModelEntity is in an invalid state: ${ModelEntity.currentChain.toString}. Discarding this chain, resetting and continuing...")
-      currentChain = EmptyConnection
 
-    currentChain =  d match
+  def createPartialConnection(a: ModelGraphNode, c: ModelGraphEdge, d: DIRECTION): PartialConnection =
+    currentChain = d match
       case DIRECTION.BIDIRECTIONAL => BiDirectionalConnection(a, c)
       case DIRECTION.RIGHT2LEFT => LeftDirectional(a, c)
       case DIRECTION.LEFT2RIGHT => RightDirectional(a, c)
-      
+
     currentChain.asInstanceOf[PartialConnection]
 
   def createCompleteConnection(pc: PartialConnection, b: ModelGraphNode): CompleteConnection =
-    if !ModelEntity.currentChain.isInstanceOf[PartialConnection] then
-      logger.error(s"ModelEntity is in an invalid state: ${ModelEntity.currentChain.toString}. Discarding this chain, resetting and continuing...")
-      currentChain = EmptyConnection
-
     currentChain = pc match
-      case BiDirectionalConnection(left, channel) => CompletedChain(left, b, channel, BIDIRECTIONAL) 
+      case BiDirectionalConnection(left, channel) => CompletedChain(left, b, channel, BIDIRECTIONAL)
       case LeftDirectional(to, channel) => CompletedChain(b, to, channel, RIGHT2LEFT)
       case RightDirectional(from, channel) => CompletedChain(from, b, channel, LEFT2RIGHT)
       case puzzled => BadConnection(s"ModelEntity is in an invalid state: $puzzled. Discarding this chain, resetting and continuing...")
     val conn = currentChain.asInstanceOf[CompleteConnection]
-    currentChain = EmptyConnection
     conn
