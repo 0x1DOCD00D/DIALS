@@ -18,12 +18,18 @@ extension (aN: AgentEntity)
   infix def ~>(c: ModelGraphEdge): RightDirectional = createPartialConnection(aN, c, LEFT2RIGHT).asInstanceOf[RightDirectional]
   infix def <~(c: ModelGraphEdge): LeftDirectional = createPartialConnection(aN, c, RIGHT2LEFT).asInstanceOf[LeftDirectional]
 
-class ModelEntity private (val name: String, val connections: ListBuffer[Connection] = ListBuffer.empty) extends DialsEntity:
+class ModelEntity private (
+                            val name: String,
+                            val cardinalities: ListBuffer[Cardinality] = ListBuffer.empty,
+                            val connections: ListBuffer[Connection] = ListBuffer.empty) extends DialsEntity:
   override def toString: String = s"ModelEntity: $name" +
     (if connections.isEmpty then " has no connections"
-      else s" with connections: ${connections.mkString(", ")}")
+      else s" with connections: ${connections.mkString(", ")}") +
+      (if cardinalities.isEmpty then " has no cardinalities"
+      else s" with cardinalities: ${cardinalities.mkString(", ")}")
 
   def addConnection(c: Connection): Unit = connections.prependAll(List(c))
+  def addCardinality(c: Cardinality): Unit = cardinalities.prependAll(List(c))
 
   infix def `is defined as`(defModel: => Unit): ModelEntity =
     GlobalProcessingState(this) match
@@ -37,7 +43,6 @@ class ModelEntity private (val name: String, val connections: ListBuffer[Connect
             if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Setting the global processing state to $obj")
     this
 
-
 object ModelEntity:
   private val modelEntities: ListBuffer[ModelEntity] = ListBuffer.empty
 
@@ -48,7 +53,7 @@ object ModelEntity:
   override def toString: String = modelEntities.map(_.toString).mkString("\n")
 
   def resetConnectionChain(): Unit = _currentChain = EmptyConnection
-  
+
   def currentChain: Connection = _currentChain
 
   def currentChain_=(newConnection: Connection): Unit =
@@ -81,6 +86,12 @@ object ModelEntity:
       if ConfigDb.`DIALS.General.debugMode` then logger.warn(s"ModelEntity with name $name already exists")
       found.get
 
+  def apply(c: Cardinality): Either[String, ModelEntity] =
+    if modelEntities.isEmpty then Left("ModelEntity is in an invalid state: there is no model entity to add the cardinality to.")
+    else
+      modelEntities.head.addCardinality(c)
+      Right(modelEntities.head)
+      
   def resetAll(): Unit = modelEntities.clear()
 
   enum DIRECTION:
