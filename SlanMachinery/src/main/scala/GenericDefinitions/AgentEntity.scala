@@ -69,7 +69,7 @@ object AgentEntity:
   override def toString: String =
     s"All agents: ${agents.toList.map(_.name)} with the following breakdown:\n" + agents.map(_.toString).mkString(";\n\n")
 
-  def resetAll(): Unit = 
+  def resetAll(): Unit =
     agents.clear()
     autoTriggered.clear()
 
@@ -136,7 +136,7 @@ object AgentEntity:
       autoTriggered.put(agent, state)
 
   def autoTriggeredAgents(): List[(AgentEntity, StateEntity)] = autoTriggered.toList
-  
+
   def apply(action: BehaviorEntity): Unit =
     val lst = agents.toList
     if lst.isEmpty then throw new IllegalStateException(s"No agent is defined even though the behavior is specified: ${action.name}")
@@ -208,7 +208,7 @@ class AgentEntity(val name: String) extends DialsEntity:
   infix def autotrigger(state: StateEntity): Unit =
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Setting the state ${state.name} to autotrigger for the agent $name")
     AgentEntity(this, state)
-    
+
   infix def switch2(nextState: StateEntity): Unit =
     require(nextState != null)
     val currAgentState = AgentEntity.getCurrentAgentState
@@ -227,10 +227,10 @@ class AgentEntity(val name: String) extends DialsEntity:
     if GlobalProcessingState.isGroup then
       logger.error(s"The agent $name cannot leave a group because it's being defined as a member of a group")
     else group.removeAgent(this)
-  
+
   infix def has[T](defAgent: => T): AgentEntity =
     GlobalProcessingState(this) match
-      case Left(errorMsg) => 
+      case Left(errorMsg) =>
         logger.error(errorMsg)
       case Right(obj) =>
         defAgent
@@ -238,4 +238,4 @@ class AgentEntity(val name: String) extends DialsEntity:
           case Left(errMsg) => logger.error(errMsg)
           case Right(_) =>
             if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Setting the global processing state to $obj")
-    this        
+    this

@@ -19,6 +19,7 @@ import scala.language.dynamics
 import scala.language.postfixOps
 import Keywords.*
 import org.scalatest.DoNotDiscover
+import scala.concurrent.duration.DurationInt
 
 @DoNotDiscover
 class AgentEntityTest extends AnyFlatSpec with Matchers {
@@ -131,6 +132,25 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
     AgentEntity().length shouldBe 1
     GlobalProcessingState.resetAll()
   }
+
+  it should "generate one agent definition with a timer attached to some states" in {
+    (agent process1) has {
+      (state st2) behaves {
+        (action b5) does {
+          println("b5 in s2")
+        } triggeredBy {
+          (Keywords.message m3)
+          (Keywords.message m4)
+          (Keywords.message m5)
+        }
+      } switch2 (state st1) after (1 milli)
+    }
+
+    logger.info(AgentEntity.toString)
+    AgentEntity().length shouldBe 1
+    GlobalProcessingState.resetAll()
+  }
+
 
   it should "create agents that can be auto triggered to start a simulation" in {
     (agent process1) has {
