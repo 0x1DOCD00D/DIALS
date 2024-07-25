@@ -9,4 +9,16 @@
 package GenericDefinitions
 
 import org.scalatest.Suites
-class TestDriver extends Suites (new AgentEntityTest,new ResourceEntityTest, new GroupEntityTest, new MessageEntityTest, new BehaviorEntityTest, new AgentEntityTest, new ResourceEntityTest, new GroupEntityTest, new MessageEntityTest, new BehaviorEntityTest)
+class TestDriver extends Suites (
+  new AgentEntityTest,
+  new ResourceEntityTest, 
+  new GroupEntityTest, 
+  new MessageEntityTest, 
+  new BehaviorEntityTest, 
+  new AgentEntityTest, 
+  new ResourceEntityTest, 
+  new GroupEntityTest, 
+  new MessageEntityTest, 
+  new BehaviorEntityTest,
+  new MessageEntityTest
+)
