@@ -100,15 +100,19 @@ class ModelEntityTest extends AnyFlatSpec with Matchers {
   it should "define a model with cardinalities of entities" in {
     (model m4) `is defined as` {
       |(agent a1)| := exactly 10;
-      |(agent a2)| := approximately 100 `plus or minus` 10;
-      |(agent a3)| := between 10 and 20;
-      |(agent a4)| := exactly ((pdf NormalDistribution) as (100, 10));
-      |(agent a5)| less than 10;
+      |(agent a2)| := exactly (instance A);
+      |(agent a3)| := approximately 100 `plus or minus` 10;
+      |(agent a4)| := between 10 and 20;
+      |(agent a5)| := exactly ((pdf NormalDistribution) as (100, 10));
+      |(agent a6)| less than 10;
       |(group g1)| greater than 2;
     }
     logger.info(ModelEntity.toString)
     val modelList = ModelEntity()
     logger.info(ModelEntity.toString)
+    AgentEntity().size shouldBe 6
+    GroupEntity().size shouldBe 1
+    AgentEntity.getAliases().head._1 shouldBe "A"
     modelList.head.cardinalities.size shouldBe 6
     ModelEntity.resetAll()
   }

@@ -65,6 +65,7 @@ object AgentEntity:
   private val logger = CreateLogger(classOf[AgentEntity])
   private val agents: ListBuffer[AgentEntity] = ListBuffer()
   private val autoTriggered: mutable.Map[AgentEntity, StateEntity] = mutable.Map()
+  private val enumeratedAgentAliases: ListBuffer[AgentInstanceAlias] = ListBuffer()
 
   override def toString: String =
     s"All agents: ${agents.toList.map(_.name)} with the following breakdown:\n" + agents.map(_.toString).mkString(";\n\n")
@@ -74,6 +75,7 @@ object AgentEntity:
     autoTriggered.clear()
 
   def apply(): List[String] = agents.map(_.name).toList
+  def getAliases(): List[AgentInstanceAlias] = enumeratedAgentAliases.toList
 
   def apply(name: String): AgentEntity =
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Creating an agent entity named $name")
@@ -97,6 +99,12 @@ object AgentEntity:
 
   def getState(name: String): Option[StateEntity] = agents.headOption.flatMap(_.getStates.find(s => s.name == name))
 
+  def apply(alias: AgentInstanceAlias): Unit = 
+    if enumeratedAgentAliases.toList.exists(e => e._1 == alias.alias) then
+      logger.warn(s"Agent alias ${alias.alias}.name}")
+    else if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Creating an agent alias ${alias.alias} for agent ${alias.agent.getOrElse("agent unknown")}")
+    enumeratedAgentAliases.prependAll(List(alias))
+    
   def apply(stateEntity: StateEntity): Unit =
     logger.info(s"Creating a state entity for agent ${agents.head.name}: ${stateEntity.toString}")
     val lst = agents.toList
