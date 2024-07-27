@@ -107,6 +107,7 @@ class ModelEntityTest extends AnyFlatSpec with Matchers {
       |(agent a6)| less than 10;
       |(group g1)| greater than 2;
     }
+    logger.info(AgentEntity.toString)
     logger.info(ModelEntity.toString)
     val modelList = ModelEntity()
     logger.info(ModelEntity.toString)

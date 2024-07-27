@@ -26,7 +26,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
   val logger: Logger = CreateLogger(classOf[AgentEntityTest])
   behavior of "agents entities"
 
-  it should "produce an intermediate representation of the agent definitions" in {
+  it should "produce an intermediate representation of the ent definitions" in {
     (agent process1) has {
       (state st1) behaves {
 //        behavior is already a keyword in scalatest so we can use the keyword action, alternatively
@@ -56,7 +56,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
     GlobalProcessingState.resetAll()
   }
 
-  it should "generate three agent definitions" in {
+  it should "generate three ent definitions" in {
     (agent process1) has {
       (state st1) behaves {
         (action b1);
@@ -87,7 +87,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
     GlobalProcessingState.resetAll()
   }
 
-  it should "generate one agent definition with multiple actions" in {
+  it should "generate one ent definition with multiple actions" in {
     (agent process1) has {
       (state st2) behaves {
         (action b5) does {
@@ -110,7 +110,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
     GlobalProcessingState.resetAll()
   }
 
-  it should "generate one agent definition with a periodic behavior" in {
+  it should "generate one ent definition with a periodic behavior" in {
     (agent process1) has {
       (state st2) behaves {
         (action b5) does {
@@ -133,7 +133,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
     GlobalProcessingState.resetAll()
   }
 
-  it should "generate one agent definition with a timer attached to some states" in {
+  it should "generate one ent definition with a timer attached to some states" in {
     (agent process1) has {
       (state st2) behaves {
         (action b5) does {

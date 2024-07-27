@@ -44,7 +44,7 @@ object GroupEntity:
   def apply(): List[String] = groups.map(_.nameIs).toList
   
   def apply(a: AgentEntity): Unit =
-    require(a != null, "The agent cannot be null")
+    require(a != null, "The ent cannot be null")
     groups.head.addAgent(a)
 
   def apply(r: ResourceEntity): Unit =

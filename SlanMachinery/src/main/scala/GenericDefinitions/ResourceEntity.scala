@@ -15,10 +15,10 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 /*
-* A resource can be defined within an agent or independent of any other entity. A composite resource is a collection of one or more resources.
+* A resource can be defined within an ent or independent of any other entity. A composite resource is a collection of one or more resources.
 * Essentially, a resource is a store for some data and the data can be of any type even though in simulators only numbers or their collections are used.
-* If a resource is declared as (resource r) at the top level and not within any agent then it should be added to the list of top level resource.
-* If a resource is declared within an agent, which is a top-level entity, then it should be added to the list of resources of the agent.
+* If a resource is declared as (resource r) at the top level and not within any ent then it should be added to the list of top level resource.
+* If a resource is declared within an ent, which is a top-level entity, then it should be added to the list of resources of the ent.
 * */
 
 class ResourceEntity private (val name: String, val fieldResources: ListBuffer[ResourceEntity] = ListBuffer(), var values: Array[Any] = Array()) extends DialsEntity:
@@ -88,4 +88,4 @@ object ResourceEntity:
       topLevelResources.prependAll(List(newRes))
       newRes
     else
-      throw new IllegalStateException(s"Resource $name is not defined within an agent or at the top level with the global state ${GlobalProcessingState.getCurrentProcessingState}")
+      throw new IllegalStateException(s"Resource $name is not defined within an ent or at the top level with the global state ${GlobalProcessingState.getCurrentProcessingState}")

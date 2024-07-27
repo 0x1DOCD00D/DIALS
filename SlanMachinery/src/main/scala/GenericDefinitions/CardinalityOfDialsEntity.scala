@@ -52,11 +52,11 @@ class NoCardinality:
     logger.error(s"The cardinality instruction is not defined for value $value")
 
 class EqualToSomething(val entity: DialsEntity):
-  infix def exactly[T <: DialsEntity | Int | AgentInstanceAlias](value: T): Unit =
+  infix def exactly[T <: DialsEntity | Int | EntityInstanceAlias](value: T): Unit =
     `value` match
       case vpdf: DistributionEntity => ModelEntity(Cardinality(entity, EntityPdfValue(vpdf)))
       case vint: Int => ModelEntity(Cardinality(entity, EntityIntValue(vint)))
-      case valias: AgentInstanceAlias => AgentEntity(valias.copy(entity))
+      case valias: EntityInstanceAlias => AgentEntity(valias.copy(entity))
     ()
   infix def approximately(value: Int): Approximately = new Approximately(entity, value)
   infix def between(from: Int): BetweenFromTo = new BetweenFromTo(entity, from)

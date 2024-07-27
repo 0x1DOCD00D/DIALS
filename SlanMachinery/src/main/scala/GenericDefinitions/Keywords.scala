@@ -20,4 +20,4 @@ object Keywords:
   val field = new KeywordTemplate(classOf[FieldEntity])
   val model = new KeywordTemplate(classOf[ModelEntity])
   val pdf = new KeywordTemplate(classOf[DistributionEntity])
-  val instance = new KeywordTemplate(classOf[AgentInstanceAlias])
+  val instance = new KeywordTemplate(classOf[EntityInstanceAlias])

@@ -16,6 +16,7 @@ import scala.language.dynamics
 import scala.language.postfixOps
 
 trait DialsEntity
+
 case object NoEntity extends DialsEntity
 
 class KeywordTemplate[T <: DialsEntity](classType: Class[T]) extends Dynamic {
@@ -35,7 +36,7 @@ class KeywordTemplate[T <: DialsEntity](classType: Class[T]) extends Dynamic {
       else StateEntity(name).asInstanceOf[T]
     else if classType == classOf[BehaviorEntity] then BehaviorEntity(name).asInstanceOf[T]
     else if classType == classOf[DistributionEntity] then DistributionEntity(name).asInstanceOf[T]
-    else if classType == classOf[AgentInstanceAlias] then AgentInstanceAlias(name).asInstanceOf[T]
+    else if classType == classOf[EntityInstanceAlias] then EntityInstanceAlias(name).asInstanceOf[T]
     else throw new IllegalArgumentException(s"Unknown entity type $classType")
   }
 }

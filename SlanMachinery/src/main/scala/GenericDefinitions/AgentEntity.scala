@@ -18,67 +18,66 @@ import scala.language.dynamics
 import scala.language.postfixOps
 
 /*
-* An agent represents an FSM that is a relation between states defined by transitions.
-* In turn, each state is linked to specific behaviors that are executed when the agent is in that state.
+* An ent represents an FSM that is a relation between states defined by transitions.
+* In turn, each state is linked to specific behaviors that are executed when the ent is in that state.
 * Since each behavior is triggered by messages of certain types there are many behaviors that can be executed in a given state
-* depending on messages that are received by this agent.
-  (agent process1) has {
+* depending on messages that are received by this ent.
+  (ent process1) has {
   (state startState) behaves {
     (behavior behavior1) does {
-      println(s"agent ${mutableRef.ref.get} behavior in the init state")
+      println(s"ent ${mutableRef.ref.get} behavior in the init state")
     };
     (behavior behavior2) does {
-      println(s"agent ${mutableRef.ref.get} behavior 2 in the init state")
+      println(s"ent ${mutableRef.ref.get} behavior 2 in the init state")
     }
   } transitions to(state newState);
   (state newState) behaves {
     (behavior behavior1) does {
-      println(s"agent ${mutableRef.ref.get} behavior in the new state")
+      println(s"ent ${mutableRef.ref.get} behavior in the new state")
     }
   } transitions to(state newState1);
   (state newState1) transitions to(state newState2)
 }
 
-(agent process2) has {
+(ent process2) has {
   (behavior behavior1) does {
-      println(s"agent ${mutableRef.ref.get} behavior in the new state")
+      println(s"ent ${mutableRef.ref.get} behavior in the new state")
     }
   (resource resource1)
 }
-* Agent process2 is a simple agent that does not have states and transitions. It is defined by a single behavior that is executed when, for example, an agent receives certain messages
-* and a single resource that is used by this agent. Evaluating (agent process1) results in an object of AgentEntity whose method, has takes a block of code that does the definition of some FSM as
+* Agent process2 is a simple ent that does not have states and transitions. It is defined by a single behavior that is executed when, for example, an ent receives certain messages
+* and a single resource that is used by this ent. Evaluating (ent process1) results in an object of AgentEntity whose method, has takes a block of code that does the definition of some FSM as
 * states with behaviors and their transitions. The initial state is designated with the case object InitialState and the transitions are defined
 * using the method, transitions. Some behaviors may be defined locally within the block of code inside the block of code that is passed to the method, has.
 * Once a block of code is passed to the method has it is executed and a state machine is extracted. That is, each (state <name>) entry is executed
 * and it creates an object of the type StateEntity that is populated with the information about the behavior in this state that is passed to the method, behaves.
 * The orchestration of this evaluation ensures that the context reference is never modified concurrently, but only in timed sequence of the execution steps.
-* That is, when (agent process1) is executed it creates an object of AgentEntity and makes it the current top context agent in the AgentEntity object.
+* That is, when (ent process1) is executed it creates an object of AgentEntity and makes it the current top context ent in the AgentEntity object.
 * Next, the method has is called and it executes the block of code that is passed to it. Each entry in this block of code declares either a state
 * or a resource. Executing each entry creates an object of either StateEntity or ResourceEntity and populates it with the information about this entity
 * just like it is done with the object of AgentEntity.
 * One frequently used solution is a special combinator, usually ~ that combines different entities in a single context, e.g., a list that does
 * the elements that are representations of these entities. The problem is to make sure that all keywords and blocks of code that finish a declarative
 * statement result in an object of the type that implements the method ~. Using semicolon seems to be a natural way to combine declarations.
-* When an object of StateEntity or ResourceEntity is created it is added to the list of states/resources of the current top context agent.
+* When an object of StateEntity or ResourceEntity is created it is added to the list of states/resources of the current top context ent.
 */
-object AgentEntity:
+object AgentEntity extends EnumeratedNamedEntityInstance:
   private val logger = CreateLogger(classOf[AgentEntity])
   private val agents: ListBuffer[AgentEntity] = ListBuffer()
   private val autoTriggered: mutable.Map[AgentEntity, StateEntity] = mutable.Map()
-  private val enumeratedAgentAliases: ListBuffer[AgentInstanceAlias] = ListBuffer()
 
   override def toString: String =
-    s"All agents: ${agents.toList.map(_.name)} with the following breakdown:\n" + agents.map(_.toString).mkString(";\n\n")
+    s"All agents: ${agents.toList.map(_.name)} with the following breakdown:\n" + agents.map(_.toString).mkString(";\n\n") +
+    s"\n\nAliases: ${enumeratedAliases.map(_.toString).mkString(", ")}"
 
   def resetAll(): Unit =
     agents.clear()
     autoTriggered.clear()
 
   def apply(): List[String] = agents.map(_.name).toList
-  def getAliases(): List[AgentInstanceAlias] = enumeratedAgentAliases.toList
 
   def apply(name: String): AgentEntity =
-    if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Creating an agent entity named $name")
+    if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Creating an ent entity named $name")
     val found = agents.toList.find(a => a.name == name)
     if found.isDefined then
       if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Agent $name is already defined.")
@@ -99,24 +98,24 @@ object AgentEntity:
 
   def getState(name: String): Option[StateEntity] = agents.headOption.flatMap(_.getStates.find(s => s.name == name))
 
-  def apply(alias: AgentInstanceAlias): Unit = 
-    if enumeratedAgentAliases.toList.exists(e => e._1 == alias.alias) then
+  def apply(alias: EntityInstanceAlias): Unit = 
+    if enumeratedAliases.toList.exists(e => e._1 == alias.alias) then
       logger.warn(s"Agent alias ${alias.alias}.name}")
-    else if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Creating an agent alias ${alias.alias} for agent ${alias.agent.getOrElse("agent unknown")}")
-    enumeratedAgentAliases.prependAll(List(alias))
+    else if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Creating an ent alias ${alias.alias} for ent ${alias.ent.getOrElse("ent unknown")}")
+    enumeratedAliases.prependAll(List(alias))
     
   def apply(stateEntity: StateEntity): Unit =
-    logger.info(s"Creating a state entity for agent ${agents.head.name}: ${stateEntity.toString}")
+    logger.info(s"Creating a state entity for ent ${agents.head.name}: ${stateEntity.toString}")
     val lst = agents.toList
     if lst.isEmpty then
-      throw new IllegalStateException(s"No agent is defined even though the state is specified: ${stateEntity.name}")
+      throw new IllegalStateException(s"No ent is defined even though the state is specified: ${stateEntity.name}")
     else if !lst.head.states.exists(s => s.name == stateEntity.name) then
-      logger.info(s"Creating the state ${stateEntity.name} under the agent ${lst.head.name}")
+      logger.info(s"Creating the state ${stateEntity.name} under the ent ${lst.head.name}")
       agents.head.states.prepend(stateEntity)
       agents.head.currentState = Some(stateEntity)
     else
       val oldState = lst.head.states.find(s => s.name == stateEntity.name).get
-      logger.info(s"Replacing state ${oldState.toString} in agent ${lst.head.name} with a new state entity ${stateEntity.toString}")
+      logger.info(s"Replacing state ${oldState.toString} in ent ${lst.head.name} with a new state entity ${stateEntity.toString}")
       agents.head.currentState = Some(stateEntity)
       agents.head.states.update(agents.head.states.indexWhere(s => s.name == stateEntity.name), stateEntity)
 
@@ -138,7 +137,7 @@ object AgentEntity:
 
   def apply(agent: AgentEntity, state: StateEntity): Unit =
     if autoTriggered.contains(agent) then
-      logger.warn(s"Auto trigger behavior for agent ${agent.name} already exists, resetting it to the new state ${state.name}")
+      logger.warn(s"Auto trigger behavior for ent ${agent.name} already exists, resetting it to the new state ${state.name}")
       autoTriggered(agent) = state
     else
       autoTriggered.put(agent, state)
@@ -147,30 +146,30 @@ object AgentEntity:
 
   def apply(action: BehaviorEntity): Unit =
     val lst = agents.toList
-    if lst.isEmpty then throw new IllegalStateException(s"No agent is defined even though the behavior is specified: ${action.name}")
+    if lst.isEmpty then throw new IllegalStateException(s"No ent is defined even though the behavior is specified: ${action.name}")
     else if agents.head.currentState.isDefined then
       val state = agents.head.currentState.get
       state.behaviors.find(b => b.name == action.name) match
         case Some(b) =>
-          if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Behavior ${action.name} already exists in the state ${state.name} of the agent ${lst.head.name}")
+          if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Behavior ${action.name} already exists in the state ${state.name} of the ent ${lst.head.name}")
           b.triggerMsgs.prependAll(action.triggerMsgs)
           b.actualActions.prependAll(action.actualActions)
           if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Behavior ${action.name} is updated with ${action.triggerMsgs.toList.length} trigger messages and ${action.actualActions.toList.length} actions")
           if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Behavior ${b.name} contains ${b.triggerMsgs.toList.length} trigger messages and ${b.actualActions.toList.length} actions")
         case None =>
-          if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Creating a behavior entity named ${action.name} under the agent ${lst.head.name} for its state ${state.name}")
+          if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Creating a behavior entity named ${action.name} under the ent ${lst.head.name} for its state ${state.name}")
           state.behaviors.prependAll(List(action))
     else
       throw new IllegalStateException(s"No state is defined even though the behavior is specified: ${action.name}")
 
   def apply(msgTrigger: MessageEntity): Unit =
     val lst = agents.toList
-    if lst.isEmpty then throw new IllegalStateException(s"No agent is defined even though the trigger message is specified: ${msgTrigger.name}")
+    if lst.isEmpty then throw new IllegalStateException(s"No ent is defined even though the trigger message is specified: ${msgTrigger.name}")
     else if agents.head.currentState.isDefined then
       val state = agents.head.currentState.get
       val beh = state.behaviors.headOption
       if beh.isDefined then
-        logger.info(s"Triggering message ${msgTrigger.name} for the behavior ${beh.get.name} under the agent ${lst.head.name} for its state ${state.name}")
+        logger.info(s"Triggering message ${msgTrigger.name} for the behavior ${beh.get.name} under the ent ${lst.head.name} for its state ${state.name}")
         beh.get.triggerMsgs.prependAll(List(msgTrigger))
       else
         throw new IllegalStateException(s"No behavior is defined even though the trigger message is specified: ${msgTrigger.name}")
@@ -179,9 +178,9 @@ object AgentEntity:
 
 
   def apply(resourceEntity: ResourceEntity): Unit =
-    if agents.isEmpty then throw new IllegalStateException(s"No agent is defined even though the resource is specified: ${resourceEntity.name}")
+    if agents.isEmpty then throw new IllegalStateException(s"No ent is defined even though the resource is specified: ${resourceEntity.name}")
     else
-      logger.info(s"Creating a resource entity named ${resourceEntity.name} under the agent ${agents.head.name}")
+      logger.info(s"Creating a resource entity named ${resourceEntity.name} under the ent ${agents.head.name}")
       agents.head.resources.prependAll(List(resourceEntity))
 
   def getCurrentAgent: Option[String] = agents.headOption.map(_.name)
@@ -214,26 +213,26 @@ class AgentEntity(val name: String) extends DialsEntity:
   def getResources: List[ResourceEntity] = resources.toList
 
   infix def autotrigger(state: StateEntity): Unit =
-    if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Setting the state ${state.name} to autotrigger for the agent $name")
+    if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Setting the state ${state.name} to autotrigger for the ent $name")
     AgentEntity(this, state)
 
   infix def switch2(nextState: StateEntity): Unit =
     require(nextState != null)
     val currAgentState = AgentEntity.getCurrentAgentState
     if currAgentState.isDefined then
-      logger.info(s"Switching from state ${currAgentState.get.name} to the state ${nextState.name} for the agent ${AgentEntity.getCurrentAgent}")
+      logger.info(s"Switching from state ${currAgentState.get.name} to the state ${nextState.name} for the ent ${AgentEntity.getCurrentAgent}")
       AgentEntity(currAgentState.get, nextState)
       ()
-    else throw new IllegalStateException(s"The agent ${AgentEntity.getCurrentAgent} has no current state - totally impossible!")
+    else throw new IllegalStateException(s"The ent ${AgentEntity.getCurrentAgent} has no current state - totally impossible!")
 
   infix def joins(group: => GroupEntity): Unit =
     if GlobalProcessingState.isGroup then
-      logger.error(s"The agent $name cannot join a group because it is already a member of a group")
+      logger.error(s"The ent $name cannot join a group because it is already a member of a group")
     else group.comprises(this)
 
   infix def leaves(group: => GroupEntity): Unit =
     if GlobalProcessingState.isGroup then
-      logger.error(s"The agent $name cannot leave a group because it's being defined as a member of a group")
+      logger.error(s"The ent $name cannot leave a group because it's being defined as a member of a group")
     else group.removeAgent(this)
 
   infix def has[T](defAgent: => T): AgentEntity =
