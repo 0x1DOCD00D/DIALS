@@ -44,8 +44,8 @@ class ModelEntityTest extends AnyFlatSpec with Matchers {
     }
     logger.info(ModelEntity.toString)
     val modelList = ModelEntity()
-    modelList.head.connections.filter(_.isInstanceOf[PartialConnection]).size shouldBe 1
-    modelList.head.connections.filter(_.isInstanceOf[CompleteConnection]).size shouldBe 2
+    modelList.head.connections.count(_.isInstanceOf[PartialConnection]) shouldBe 1
+    modelList.head.connections.count(_.isInstanceOf[CompleteConnection]) shouldBe 2
     modelList.head.connections.size shouldBe 3
     modelList.map(_.name) shouldBe List("m2")
     ModelEntity.resetAll()
@@ -60,8 +60,8 @@ class ModelEntityTest extends AnyFlatSpec with Matchers {
     }
     logger.info(ModelEntity.toString)
     val modelList = ModelEntity()
-    modelList.head.connections.filter(_.isInstanceOf[PartialConnection]).size shouldBe 1
-    modelList.head.connections.filter(_.isInstanceOf[CompleteConnection]).size shouldBe 5
+    modelList.head.connections.count(_.isInstanceOf[PartialConnection]) shouldBe 1
+    modelList.head.connections.count(_.isInstanceOf[CompleteConnection]) shouldBe 5
     modelList.head.connections.size shouldBe 6
     modelList.map(_.name) shouldBe List("m2")
     ModelEntity.resetAll()
@@ -79,8 +79,8 @@ class ModelEntityTest extends AnyFlatSpec with Matchers {
     }
     logger.info(ModelEntity.toString)
     val modelList = ModelEntity()
-    modelList.head.connections.filter(_.isInstanceOf[PartialConnection]).size shouldBe 1
-    modelList.head.connections.filter(_.isInstanceOf[CompleteConnection]).size shouldBe 7
+    modelList.head.connections.count(_.isInstanceOf[PartialConnection]) shouldBe 1
+    modelList.head.connections.count(_.isInstanceOf[CompleteConnection]) shouldBe 7
     modelList.head.connections.size shouldBe 8
     modelList.map(_.name) shouldBe List("m2")
     ModelEntity.resetAll()
@@ -92,8 +92,8 @@ class ModelEntityTest extends AnyFlatSpec with Matchers {
     }
     logger.info(ModelEntity.toString)
     val modelList = ModelEntity()
-    modelList.head.connections.filter(_.isInstanceOf[PartialConnection]).size shouldBe 0
-    modelList.head.connections.filter(_.isInstanceOf[CompleteConnection]).size shouldBe 4
+    modelList.head.connections.count(_.isInstanceOf[PartialConnection]) shouldBe 0
+    modelList.head.connections.count(_.isInstanceOf[CompleteConnection]) shouldBe 4
     modelList.head.connections.size shouldBe 4
     modelList.map(_.name) shouldBe List("m3")
     ModelEntity.resetAll()
@@ -201,7 +201,7 @@ class ModelEntityTest extends AnyFlatSpec with Matchers {
     logger.info(AgentEntity.toString)
     logger.info(ModelEntity.toString)
     val modelList = ModelEntity()
-    modelList.head.connections.filter(_.isInstanceOf[PartialConnection]).size shouldBe 0
+    modelList.head.connections.count(_.isInstanceOf[PartialConnection]) shouldBe 0
     modelList.head.connections.size shouldBe 40
     ModelEntity.resetAll()
   }
