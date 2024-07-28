@@ -22,7 +22,7 @@ import org.scalatest.DoNotDiscover
 
 @DoNotDiscover
 class ModelEntityTest extends AnyFlatSpec with Matchers {
-  val logger: Logger = CreateLogger(classOf[GroupEntityTest])
+  val logger: Logger = CreateLogger(classOf[ModelEntityTest])
   behavior of "model entities"
 
   it should "generate a model definition with three connected agents" in {
@@ -65,6 +65,8 @@ class ModelEntityTest extends AnyFlatSpec with Matchers {
     modelList.head.connections.size shouldBe 6
     modelList.map(_.name) shouldBe List("m2")
     ModelEntity.resetAll()
+    AgentEntity.resetAll()
+    ChannelEntity.resetAll()
   }
 
   it should "generate a model definition with one partial connection and three extended connections" in {
@@ -78,8 +80,8 @@ class ModelEntityTest extends AnyFlatSpec with Matchers {
     logger.info(ModelEntity.toString)
     val modelList = ModelEntity()
     modelList.head.connections.filter(_.isInstanceOf[PartialConnection]).size shouldBe 1
-    modelList.head.connections.filter(_.isInstanceOf[CompleteConnection]).size shouldBe 5
-    modelList.head.connections.size shouldBe 6
+    modelList.head.connections.filter(_.isInstanceOf[CompleteConnection]).size shouldBe 7
+    modelList.head.connections.size shouldBe 8
     modelList.map(_.name) shouldBe List("m2")
     ModelEntity.resetAll()
   }
@@ -116,6 +118,8 @@ class ModelEntityTest extends AnyFlatSpec with Matchers {
     AgentEntity.getAliases().head._1 shouldBe "A"
     modelList.head.cardinalities.size shouldBe 6
     ModelEntity.resetAll()
+    AgentEntity.resetAll()
+    GroupEntity.resetAll()
   }
 
   it should "define a model with collections of entities" in {
@@ -180,6 +184,25 @@ class ModelEntityTest extends AnyFlatSpec with Matchers {
     val lst = (agent a3).collection
     lst.isEmpty shouldBe false
     lst.size should be > 1
+    ModelEntity.resetAll()
+  }
+
+  it should "define a model with a number of connections" in {
+    import CollectionManager.*
+    (model m8) `is defined as` {
+      |(agent a1) | := exactly 5;
+      |(agent a2) | := exactly 8;
+    } `is defined as` {
+      (agent a1).collection.flatMap(ind1 =>
+        (agent a2).collection.flatMap(ind2 =>
+          List(((agent a1), ind1) <~> (channel c1) <~> ((agent a2),ind2))
+        ))
+    }
+    logger.info(AgentEntity.toString)
+    logger.info(ModelEntity.toString)
+    val modelList = ModelEntity()
+    modelList.head.connections.filter(_.isInstanceOf[PartialConnection]).size shouldBe 0
+    modelList.head.connections.size shouldBe 40
     ModelEntity.resetAll()
   }
 

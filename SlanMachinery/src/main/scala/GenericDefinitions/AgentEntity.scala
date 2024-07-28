@@ -9,6 +9,8 @@
 package GenericDefinitions
 
 import GenericDefinitions.AgentEntity.logger
+import GenericDefinitions.ModelEntity.DIRECTION.{BIDIRECTIONAL, LEFT2RIGHT, RIGHT2LEFT}
+import GenericDefinitions.ModelEntity.createPartialConnection
 import Utilz.{ConfigDb, CreateLogger}
 
 import scala.collection.mutable

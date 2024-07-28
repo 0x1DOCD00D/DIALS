@@ -19,6 +19,16 @@ case object CannotBuildPartialConnection extends PartialConnection
 trait CompleteConnection extends Connection
 case class BadConnection(msg: String) extends CompleteConnection
 
+extension (aN: ModelGraphNode)
+  infix def <~>(c: ModelGraphEdge): BiDirectionalConnection = createPartialConnection((aN, 1), c, BIDIRECTIONAL).asInstanceOf[BiDirectionalConnection]
+  infix def ~>(c: ModelGraphEdge): RightDirectional = createPartialConnection((aN, 1), c, LEFT2RIGHT).asInstanceOf[RightDirectional]
+  infix def <~(c: ModelGraphEdge): LeftDirectional = createPartialConnection((aN, 1), c, RIGHT2LEFT).asInstanceOf[LeftDirectional]
+
+extension (aN: ModelGraphNodeIndexed)
+  infix def <~>(c: ModelGraphEdge): BiDirectionalConnection = createPartialConnection(aN, c, BIDIRECTIONAL).asInstanceOf[BiDirectionalConnection]
+  infix def ~>(c: ModelGraphEdge): RightDirectional = createPartialConnection(aN, c, LEFT2RIGHT).asInstanceOf[RightDirectional]
+  infix def <~(c: ModelGraphEdge): LeftDirectional = createPartialConnection(aN, c, RIGHT2LEFT).asInstanceOf[LeftDirectional]
+
 case class BiDirectionalConnection(left: ModelGraphNodeIndexed, channel: ModelGraphEdge) extends PartialConnection:
   infix def <~>(right: ModelGraphNodeIndexed): CompletedChain =
     val cc = CompletedChain(left, right, channel, BIDIRECTIONAL)

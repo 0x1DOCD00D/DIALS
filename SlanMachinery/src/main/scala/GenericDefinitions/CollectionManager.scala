@@ -9,9 +9,10 @@
 package GenericDefinitions
 
 import Pdfs.PdfStreamGenerator
-import Utilz.{ConfigDb, Constants}
+import Utilz.{ConfigDb, Constants, CreateLogger}
 
 object CollectionManager:
+  private val logger = CreateLogger(CollectionManager.getClass)
   extension[T <: DialsEntity] (entity: T)
     def collection: List[Int] = ModelEntity(entity) match
       case None => List.empty
@@ -23,5 +24,11 @@ object CollectionManager:
           case EntityIntValue(result) => result 
           case EntityRangeOfValues(from, to) => 
             PdfStreamGenerator(Constants.UniformIntegerDistribution, Array(from.toDouble, to.toDouble)).take(1).toList.head.toInt
-        if v <= 0 then List.empty else (0 to v-1).toList
+        logger.info(s"CollectionManager: $entity has value $v")
+        if v <= 0 then
+          logger.error(s"CollectionManager: $entity collection size is $v which is less than or equal to 0")  
+          List.empty 
+        else 
+          if ConfigDb.`DIALS.General.debugMode` then logger.info(s"CollectionManager: $entity collection size is $v")
+          (0 to v-1).toList
     

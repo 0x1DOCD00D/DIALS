@@ -13,11 +13,6 @@ import GenericDefinitions.ModelEntity.{createPartialConnection, logger}
 import Utilz.ConfigDb
 import scala.collection.mutable.ListBuffer
 
-extension (aN: AgentEntity)
-  infix def <~>(c: ModelGraphEdge): BiDirectionalConnection = createPartialConnection((aN,1), c, BIDIRECTIONAL).asInstanceOf[BiDirectionalConnection]
-  infix def ~>(c: ModelGraphEdge): RightDirectional = createPartialConnection((aN,1), c, LEFT2RIGHT).asInstanceOf[RightDirectional]
-  infix def <~(c: ModelGraphEdge): LeftDirectional = createPartialConnection((aN,1), c, RIGHT2LEFT).asInstanceOf[LeftDirectional]
-
 class ModelEntity private (
                             val name: String,
                             val cardinalities: ListBuffer[Cardinality] = ListBuffer.empty,
@@ -97,8 +92,10 @@ object ModelEntity:
       modelEntities.head.addCardinality(c)
       Right(modelEntities.head)
 
-  def resetAll(): Unit = modelEntities.clear()
-
+  def resetAll(): Unit = 
+    modelEntities.clear()
+    resetConnectionChain()
+    
   enum DIRECTION:
     case LEFT2RIGHT, RIGHT2LEFT, BIDIRECTIONAL
 
