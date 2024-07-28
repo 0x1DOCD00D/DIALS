@@ -19,26 +19,40 @@ case object CannotBuildPartialConnection extends PartialConnection
 trait CompleteConnection extends Connection
 case class BadConnection(msg: String) extends CompleteConnection
 
-case class BiDirectionalConnection(left: ModelGraphNode, channel: ModelGraphEdge) extends PartialConnection:
-  infix def <~>(right: ModelGraphNode): CompletedChain =
+case class BiDirectionalConnection(left: ModelGraphNodeIndexed, channel: ModelGraphEdge) extends PartialConnection:
+  infix def <~>(right: ModelGraphNodeIndexed): CompletedChain =
     val cc = CompletedChain(left, right, channel, BIDIRECTIONAL)
     ModelEntity.currentChain = cc
     cc
 
-case class RightDirectional(from: ModelGraphNode, channel: ModelGraphEdge) extends PartialConnection:
-  infix def ~>(to: ModelGraphNode): CompletedChain = 
+  infix def <~>(right: ModelGraphNode): CompletedChain =
+    val cc = CompletedChain(left, (right,1), channel, BIDIRECTIONAL)
+    ModelEntity.currentChain = cc
+    cc
+
+case class RightDirectional(from: ModelGraphNodeIndexed, channel: ModelGraphEdge) extends PartialConnection:
+  infix def ~>(to: ModelGraphNodeIndexed): CompletedChain = 
     val cc = CompletedChain(from, to, channel, LEFT2RIGHT)
     ModelEntity.currentChain = cc
     cc
 
-case class LeftDirectional(to: ModelGraphNode, channel: ModelGraphEdge) extends PartialConnection:
-  infix def <~(from: ModelGraphNode): CompletedChain = 
+  infix def ~>(to: ModelGraphNode): CompletedChain =
+    val cc = CompletedChain(from, (to,1), channel, LEFT2RIGHT)
+    ModelEntity.currentChain = cc
+    cc
+
+case class LeftDirectional(to: ModelGraphNodeIndexed, channel: ModelGraphEdge) extends PartialConnection:
+  infix def <~(from: ModelGraphNodeIndexed): CompletedChain = 
     val cc = CompletedChain(from, to, channel, RIGHT2LEFT)
     ModelEntity.currentChain = cc
     cc
 
+  infix def <~(from: ModelGraphNode): CompletedChain =
+    val cc = CompletedChain((from,1), to, channel, RIGHT2LEFT)
+    ModelEntity.currentChain = cc
+    cc
 
-case class CompletedChain(from: ModelGraphNode, to: ModelGraphNode, channel: ModelGraphEdge, d: ModelEntity.DIRECTION) extends CompleteConnection:
+case class CompletedChain(from: ModelGraphNodeIndexed, to: ModelGraphNodeIndexed, channel: ModelGraphEdge, d: ModelEntity.DIRECTION) extends CompleteConnection:
   infix def <~>(c: ModelGraphEdge): BiDirectionalConnection = createPartialConnection(to, c, BIDIRECTIONAL).asInstanceOf[BiDirectionalConnection]
   infix def ~>(c: ModelGraphEdge): RightDirectional = createPartialConnection(to, c, LEFT2RIGHT).asInstanceOf[RightDirectional]
   infix def <~(c: ModelGraphEdge): LeftDirectional = createPartialConnection(to, c, RIGHT2LEFT).asInstanceOf[LeftDirectional]

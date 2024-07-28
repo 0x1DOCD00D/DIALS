@@ -118,4 +118,69 @@ class ModelEntityTest extends AnyFlatSpec with Matchers {
     ModelEntity.resetAll()
   }
 
+  it should "define a model with collections of entities" in {
+    import CollectionManager.*
+    (model m5) `is defined as` {
+      |(agent a1) | := exactly 10;
+      |(agent a2) | := exactly (instance A);
+      |(agent a3) | := approximately 100 `plus or minus` 10;
+      |(agent a4) | := between 10 and 20;
+      |(agent a5) | := exactly ((pdf NormalDistribution) as(100, 10));
+      |(agent a6) | less than 10;
+      |(group g1) | greater than 2;
+    } `is defined as` {
+      (agent a1).collection.flatMap(x =>
+        (agent a1).collection.flatMap(y =>
+        List(x, x + 1, x + 2)
+        ))
+    }
+    logger.info(AgentEntity.toString)
+    logger.info(ModelEntity.toString)
+    val modelList = ModelEntity()
+    logger.info(ModelEntity.toString)
+    AgentEntity().size shouldBe 6
+    GroupEntity().size shouldBe 1
+    AgentEntity.getAliases().head._1 shouldBe "A"
+    modelList.head.cardinalities.size shouldBe 6
+    ModelEntity.resetAll()
+  }
+
+  it should "define a model with one agent and the exact number of instances and check it as a collection" in {
+    import CollectionManager.*
+    (model m6) `is defined as` {
+      |(agent a1)| := exactly 10;
+    }
+    logger.info(AgentEntity.toString)
+    logger.info(ModelEntity.toString)
+    val lst = (agent a1).collection
+    lst.size shouldBe 10
+    ModelEntity.resetAll()
+  }
+
+  it should "define a model with one agent and an approximate number of instances and check it as a collection" in {
+    import CollectionManager.*
+    (model m6) `is defined as` {
+      |(agent a2) | := approximately 15 `plus or minus` 30;
+    }
+    logger.info(AgentEntity.toString)
+    logger.info(ModelEntity.toString)
+    val lst = (agent a2).collection
+    lst.size should be < 20
+    lst.size should be > 10
+    ModelEntity.resetAll()
+  }
+
+  it should "define a model with one agent and an approximate number of instances generated from a pdf distribution and check it as a collection" in {
+    import CollectionManager.*
+    (model m7) `is defined as` {
+      |(agent a3) | := exactly ((pdf NormalDistribution) as (200, 5));
+    }
+    logger.info(AgentEntity.toString)
+    logger.info(ModelEntity.toString)
+    val lst = (agent a3).collection
+    lst.isEmpty shouldBe false
+    lst.size should be > 1
+    ModelEntity.resetAll()
+  }
+
 }

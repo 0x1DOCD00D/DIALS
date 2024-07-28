@@ -14,9 +14,9 @@ import Utilz.ConfigDb
 import scala.collection.mutable.ListBuffer
 
 extension (aN: AgentEntity)
-  infix def <~>(c: ModelGraphEdge): BiDirectionalConnection = createPartialConnection(aN, c, BIDIRECTIONAL).asInstanceOf[BiDirectionalConnection]
-  infix def ~>(c: ModelGraphEdge): RightDirectional = createPartialConnection(aN, c, LEFT2RIGHT).asInstanceOf[RightDirectional]
-  infix def <~(c: ModelGraphEdge): LeftDirectional = createPartialConnection(aN, c, RIGHT2LEFT).asInstanceOf[LeftDirectional]
+  infix def <~>(c: ModelGraphEdge): BiDirectionalConnection = createPartialConnection((aN,1), c, BIDIRECTIONAL).asInstanceOf[BiDirectionalConnection]
+  infix def ~>(c: ModelGraphEdge): RightDirectional = createPartialConnection((aN,1), c, LEFT2RIGHT).asInstanceOf[RightDirectional]
+  infix def <~(c: ModelGraphEdge): LeftDirectional = createPartialConnection((aN,1), c, RIGHT2LEFT).asInstanceOf[LeftDirectional]
 
 class ModelEntity private (
                             val name: String,
@@ -75,6 +75,11 @@ object ModelEntity:
 
   def apply(): List[ModelEntity] = modelEntities.toList
 
+  def apply(entity: DialsEntity): Option[Cardinality] =
+    if modelEntities.isEmpty then throw new IllegalStateException("ModelEntity is in an invalid state: there is no model entity to add the connection to.")
+    else modelEntities.toList.head.cardinalities.find(_.entity == entity)
+  
+  
   def apply(name: String): ModelEntity =
     val found = modelEntities.toList.find(_.name == name)
     if found.isEmpty then
@@ -91,7 +96,7 @@ object ModelEntity:
     else
       modelEntities.head.addCardinality(c)
       Right(modelEntities.head)
-      
+
   def resetAll(): Unit = modelEntities.clear()
 
   enum DIRECTION:
@@ -107,7 +112,7 @@ object ModelEntity:
       case BadConnection(_) => CannotBuildPartialConnection
     currentChain.asInstanceOf[PartialConnection]
 
-  def createPartialConnection(a: ModelGraphNode, c: ModelGraphEdge, d: DIRECTION): PartialConnection =
+  def createPartialConnection(a: ModelGraphNodeIndexed, c: ModelGraphEdge, d: DIRECTION): PartialConnection =
     currentChain = d match
       case DIRECTION.BIDIRECTIONAL => BiDirectionalConnection(a, c)
       case DIRECTION.RIGHT2LEFT => LeftDirectional(a, c)
@@ -115,7 +120,7 @@ object ModelEntity:
 
     currentChain.asInstanceOf[PartialConnection]
 
-  def createCompleteConnection(pc: PartialConnection, b: ModelGraphNode): CompleteConnection =
+  def createCompleteConnection(pc: PartialConnection, b: ModelGraphNodeIndexed): CompleteConnection =
     currentChain = pc match
       case BiDirectionalConnection(left, channel) => CompletedChain(left, b, channel, BIDIRECTIONAL)
       case LeftDirectional(to, channel) => CompletedChain(b, to, channel, RIGHT2LEFT)
