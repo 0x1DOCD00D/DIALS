@@ -61,8 +61,8 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
       (state st1) behaves {
         (action b1);
         (action b2)
-      } switch2 (state st2) when { 
-        (resource X).getValues.length > 0 && (resource Y).getValues.head.toInt == 2} after 3.second;
+      } switch2 (state st2) when {
+        (resource X).getValues.length > 0 && (resource Y).getValues.head.toInt == 2} timeout 3.second ;
       (state st2) behaves {
         (action b5) does {
           println("b5 in s2")
@@ -143,7 +143,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
           (Keywords.message m4)
           (Keywords.message m5)
         }
-      } switch2 (state st1) after (1 milli)
+      } switch2 (state st1) when always timeout 1.second
     }
 
     logger.info(AgentEntity.toString)

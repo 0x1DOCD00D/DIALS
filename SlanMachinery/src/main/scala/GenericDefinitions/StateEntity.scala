@@ -22,19 +22,27 @@ object StateEntity:
     AgentEntity(newState)
     newState
 
-class ConditionConstraints(stateEntity: StateEntity, c: => Boolean = false, d: => Duration = 0.seconds):
-  infix def when(cond: => Boolean): ConditionConstraints =
-    val newCond = new ConditionConstraints(stateEntity, cond, d)
+def always: true = true
+
+class ConditionConstraints(stateEntity: StateEntity, howManyMsgs: Int = 1, c: => Boolean = false):
+  infix def when(cond: => Boolean): FailureCondition =
+    val newCond = new ConditionConstraints(stateEntity, howManyMsgs, cond)
     stateEntity.conditions = newCond
     AgentEntity(stateEntity)
-    newCond
+    new FailureCondition(stateEntity)
 
-  infix def after(duration: scala.concurrent.duration.Duration): ConditionConstraints =
-    val newCond = new ConditionConstraints(stateEntity, c, duration)
-    stateEntity.conditions = newCond
+class FailureCondition(stateEntity: StateEntity, fs: => Option[StateEntity] = None, d: => Duration = 0.seconds):
+  infix def timeout(duration: scala.concurrent.duration.Duration): FailureCondition =
+    val newFail = new FailureCondition(stateEntity, fs, duration)
+    stateEntity.failure = newFail
     AgentEntity(stateEntity)
-    newCond
+    newFail
 
+  infix def fail2(failState: => StateEntity): FailureCondition =
+    val newFail = new FailureCondition(stateEntity, Some(failState), d)
+    stateEntity.failure = newFail
+    AgentEntity(stateEntity)
+    newFail
 
 class StateEntity(
                    val name: String,
@@ -43,12 +51,16 @@ class StateEntity(
 
   private val logger = CreateLogger(classOf[StateEntity])
   private var _conditions: ConditionConstraints = new ConditionConstraints(this)
+  private var _doOnFailure: FailureCondition = new FailureCondition(this)
 
   def conditions = _conditions
   def conditions_=(cond: ConditionConstraints): Unit = _conditions = cond
 
+  def failure = _doOnFailure
+  def failure_=(cond: FailureCondition): Unit = _doOnFailure = cond
+
   override def toString: String =
-    s"StateEntity($name, ${behaviors.map(_.toString).mkString})" + 
+    s"StateEntity($name, ${behaviors.map(_.toString).mkString})" +
       s" with conditions ${_conditions.toString}"
 
   infix def behaves(defBehavior: Unit): StateEntity =
@@ -61,8 +73,7 @@ class StateEntity(
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Making the state $name periodic behavior for the ent ${AgentEntity.getCurrentAgent}")
     AgentEntity(this, timer)
 
-  infix def switch2[T](nextState: => StateEntity): ConditionConstraints =
-    require(nextState != null)
+  infix def switch2(nextState: => StateEntity): ConditionConstraints =
     logger.info(s"Switching from state $name to state ${nextState.name} for the ent ${AgentEntity.getCurrentAgent}")
     AgentEntity(this, nextState)
     new ConditionConstraints(this)
