@@ -31,6 +31,12 @@ class ResourceEntity private (val name: String, val fieldResources: ListBuffer[R
         fieldResources.map(_.toString).mkString("\n")
         )
 
+  def getValues: Array[Double] = values match
+    case a: Array[Double] => a
+    case a: Array[Int] => a.map(_.toDouble)
+    case a: Array[Long] => a.map(_.toDouble)
+    case a: Array[DistributionEntity] => ???
+
   infix def contains[T](resources: => T): ResourceEntity =
     if containerResourcesStack.isEmpty then
       GlobalProcessingState(this) match
@@ -44,8 +50,8 @@ class ResourceEntity private (val name: String, val fieldResources: ListBuffer[R
     if containerResourcesStack.isEmpty then GlobalProcessingState(NoEntity)
     this
 
-  infix def :=[T](setV: T*): Unit =
-    logger.info(s"Setting the value of the resource $name to $setV")
+  infix def :=[T <: DistributionEntity | AnyVal](setV: T*): Unit =
+    if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Setting the value of the resource $name to $setV")
     values = setV.toArray
 
   //TODO: need to implement the logic of the resource value retrieval

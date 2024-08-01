@@ -12,8 +12,9 @@ import Utilz.{ConfigDb, CreateLogger}
 import org.slf4j.Logger
 
 import scala.collection.mutable.ListBuffer
-
+import scala.compiletime.uninitialized
 import scala.concurrent.duration.Duration
+import scala.concurrent.duration.DurationInt
 
 object StateEntity:
   def apply(name: String): StateEntity =
@@ -21,17 +22,34 @@ object StateEntity:
     AgentEntity(newState)
     newState
 
-class StateEntity(val name: String, val behaviors: ListBuffer[BehaviorEntity] = ListBuffer(), var duration: Option[Duration] = None) extends DialsEntity:
-  class TimerConstraint(stateEntity: StateEntity):
-    infix def after(duration: scala.concurrent.duration.Duration): Unit =
-      stateEntity.duration = Some(duration)
-      AgentEntity(stateEntity)
-      ()
+class ConditionConstraints(stateEntity: StateEntity, c: => Boolean = false, d: => Duration = 0.seconds):
+  infix def when(cond: => Boolean): ConditionConstraints =
+    val newCond = new ConditionConstraints(stateEntity, cond, d)
+    stateEntity.conditions = newCond
+    AgentEntity(stateEntity)
+    newCond
+
+  infix def after(duration: scala.concurrent.duration.Duration): ConditionConstraints =
+    val newCond = new ConditionConstraints(stateEntity, c, duration)
+    stateEntity.conditions = newCond
+    AgentEntity(stateEntity)
+    newCond
+
+
+class StateEntity(
+                   val name: String,
+                   val behaviors: ListBuffer[BehaviorEntity] = ListBuffer()
+                 ) extends DialsEntity:
 
   private val logger = CreateLogger(classOf[StateEntity])
+  private var _conditions: ConditionConstraints = new ConditionConstraints(this)
+
+  def conditions = _conditions
+  def conditions_=(cond: ConditionConstraints): Unit = _conditions = cond
 
   override def toString: String =
-    s"StateEntity($name, ${behaviors.map(_.toString).mkString})" + duration.map(d => s" for $d").getOrElse(" no timer attached")
+    s"StateEntity($name, ${behaviors.map(_.toString).mkString})" + 
+      s" with conditions ${_conditions.toString}"
 
   infix def behaves(defBehavior: Unit): StateEntity =
     AgentEntity.getCurrentAgentState match
@@ -43,8 +61,8 @@ class StateEntity(val name: String, val behaviors: ListBuffer[BehaviorEntity] = 
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Making the state $name periodic behavior for the ent ${AgentEntity.getCurrentAgent}")
     AgentEntity(this, timer)
 
-  infix def switch2[T](nextState: => StateEntity): TimerConstraint =
+  infix def switch2[T](nextState: => StateEntity): ConditionConstraints =
     require(nextState != null)
     logger.info(s"Switching from state $name to state ${nextState.name} for the ent ${AgentEntity.getCurrentAgent}")
     AgentEntity(this, nextState)
-    new TimerConstraint(this)
+    new ConditionConstraints(this)

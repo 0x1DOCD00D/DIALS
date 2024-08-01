@@ -205,7 +205,7 @@ class AgentEntity(val name: String) extends DialsEntity:
       ( if stateTransitions.isEmpty then " and no state transitions\n"
         else s" and state transitions are ${stateTransitions.map{case (k, v) => s"${k.name} -> ${v.name}"}.mkString("; ")}")
     +
-      (if states.nonEmpty then states.toList.map(s => s"\nstate ${s.name}: " + s.behaviors.map(b=>b.toString()).mkString(" ")).mkString("\n") else "") +
+      (if states.nonEmpty then states.toList.map(s => s"\nstate ${s.name}: " + s.toString()) else "") +
       (if periodicBehaviors.isEmpty then " and no periodic behaviors\n"
         else s" and periodic behaviors are ${periodicBehaviors.map{case (k, v) => s"${k.name} -> $v"}.mkString("; ")}")
 

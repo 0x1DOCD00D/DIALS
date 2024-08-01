@@ -23,7 +23,10 @@ object CollectionManager:
             PdfStreamGenerator(de.name, de.params.map(_.asInstanceOf[Int].toDouble)).take(1).toList.head.toInt
           case EntityIntValue(result) => result 
           case EntityRangeOfValues(from, to) => 
-            PdfStreamGenerator(Constants.UniformIntegerDistribution, Array(from.toDouble, to.toDouble)).take(1).toList.head.toInt
+            val rnd = PdfStreamGenerator(Constants.UniformIntegerDistribution, Array(from.toDouble, to.toDouble))
+            val res = rnd.take(1).toList.head.toInt
+            rnd.drop(1)
+            res
         logger.info(s"CollectionManager: $entity has value $v")
         if v <= 0 then
           logger.error(s"CollectionManager: $entity collection size is $v which is less than or equal to 0")  
