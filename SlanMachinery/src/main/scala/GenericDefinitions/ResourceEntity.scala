@@ -31,6 +31,10 @@ class ResourceEntity private (val name: String, val fieldResources: ListBuffer[R
         fieldResources.map(_.toString).mkString("\n")
         )
 
+  def storeValues[T <: DistributionEntity | DialsEntity | AnyVal](setV: T*): Unit =
+    if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Setting the value of the resource $name to $setV")
+    values = setV.toArray
+    
   def getValues: Array[Double] = values match
     case a: Array[Double] => a
     case a: Array[Int] => a.map(_.toDouble)
