@@ -15,6 +15,7 @@ import scala.collection.mutable.ListBuffer
 import scala.compiletime.uninitialized
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration.DurationInt
+import scala.language.postfixOps
 
 object StateEntity:
   def apply(name: String): StateEntity =
@@ -69,7 +70,7 @@ class StateEntity(
     s"StateEntity($name, ${behaviors.map(_.toString).mkString})" +
       s" with conditions ${_conditions.toString}"
   
-  infix def behaves(defBehavior: => Unit): StateEntity =
+  infix def behaves(defBehavior: PartialFunction[Any, Unit]): StateEntity =
     AgentEntity.getCurrentAgentState match
       case Some(state) => state
       case None =>

@@ -97,5 +97,5 @@ scalacOptions ++= Seq(
   "-new-syntax",
   "-release:17",
   "-source:future",
-  "-unchecked",
+  "-unchecked"
 )

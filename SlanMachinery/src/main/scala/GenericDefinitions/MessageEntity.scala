@@ -45,9 +45,10 @@ class MessageEntity private(val name: String, val fields: ListBuffer[FieldEntity
             case Right(_) => ()
     else logger.error(s"Message $name cannot be defined within other entity ${GlobalProcessingState.getCurrentProcessingState}")
 
-  infix def :=[T](setV: T*): Unit =
+  infix def :=[T](setV: T*): MessageEntity =
     logger.info(s"Setting the value of the resource $name to $setV")
     values = setV.toArray
+    this
 
   //TODO: need to implement the logic of the resource value retrieval
   def getStoredValues: Array[Any] = values //need to look up the global table of resources

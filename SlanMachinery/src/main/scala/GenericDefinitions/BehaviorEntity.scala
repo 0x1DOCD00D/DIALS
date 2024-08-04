@@ -21,6 +21,8 @@ class BehaviorEntity(val name: String, val triggerMsgs: ListBuffer[MessageEntity
     + (if actualActions.nonEmpty then s"has ${actualActions.toList.length} actions" else "is empty")
     + (if triggerMsgs.nonEmpty then s" and is triggered by ${triggerMsgs.toList.length} messages" else " and it's triggered by all messages")
   
+  def get: PartialFunction[Any, Unit] = actualActions.foldLeft(PartialFunction.empty)((a, b) => a.orElse(b))
+  
   infix def triggeredBy(msgs: => MessageEntity): BehaviorEntity =
     if GlobalProcessingState.isNoEntity then
       GlobalProcessingState(this) match
@@ -35,12 +37,12 @@ class BehaviorEntity(val name: String, val triggerMsgs: ListBuffer[MessageEntity
       msgs
       this
     else throw new IllegalStateException(s"Behavior $name's message triggers $msgs cannot be defined within other entity ${GlobalProcessingState.getCurrentProcessingState}")
-    
-  infix def does(defBehavior: PartialFunction[Any, Unit]): BehaviorEntity =
+
+  infix def does(defBehavior: PartialFunction[Any, Unit]): PartialFunction[Any, Unit] =
     val nb = new BehaviorEntity(name, ListBuffer(), ListBuffer(defBehavior))
     if GlobalProcessingState.isAgent then
       AgentEntity(nb)
-      this
+      defBehavior
     else if GlobalProcessingState.isNoEntity then
       GlobalProcessingState(nb) match
         case Left(errMsg) =>
@@ -51,12 +53,12 @@ class BehaviorEntity(val name: String, val triggerMsgs: ListBuffer[MessageEntity
             case Some(b) =>
               b.actualActions.append(defBehavior)
               GlobalProcessingState(NoEntity)
-              this
+              b.get
             case None =>
               behaviors.prependAll(List(nb))
               GlobalProcessingState(NoEntity)
-              this
-          this
+              defBehavior
+          defBehavior
     else throw new IllegalStateException(s"Behavior $name cannot be defined within other entity ${GlobalProcessingState.getCurrentProcessingState}")
 
 object BehaviorEntity:

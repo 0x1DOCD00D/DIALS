@@ -26,16 +26,16 @@ class BehaviorEntityTest extends AnyFlatSpec with Matchers {
   behavior of "action entities"
 
   it should "generate one behavior definition with multiple actions and messages" in {
-    (action b5) does {
+    (action b5) triggeredBy  {
+      (Keywords.message m1)
+      (Keywords.message m2)
+    } triggeredBy {
+      (Keywords.message m3)
+      (Keywords.message m4)
+      (Keywords.message m5)
+    } does {
       case _ => println("b5 in s2")
-      } triggeredBy  {
-        (Keywords.message m1)
-        (Keywords.message m2)
-      } triggeredBy {
-        (Keywords.message m3)
-        (Keywords.message m4)
-        (Keywords.message m5)
-      }
+      } 
 
     logger.info(BehaviorEntity.toString)
     BehaviorEntity().length shouldBe 1
@@ -47,18 +47,16 @@ class BehaviorEntityTest extends AnyFlatSpec with Matchers {
     (action b2) does {
       case _ => println("b2 in s1")
     };
-    (action b3) does {
-      case _ => println("b3 in s1")
-    } does {
-      case _ => println("b3 in s2")
-    } triggeredBy {
+    (action b3) triggeredBy {
       (Keywords.message m1)
       (Keywords.message m2)
     } triggeredBy {
       (Keywords.message m3)
       (Keywords.message m4)
       (Keywords.message m5)
-    }
+    } does {
+      case _ => println("b3 in s1")
+    } 
     (action b4) triggeredBy {
       (Keywords.message m1)
       (Keywords.message m2)
@@ -70,13 +68,13 @@ class BehaviorEntityTest extends AnyFlatSpec with Matchers {
     (action b5) triggeredBy {
       (Keywords.message m1)
       (Keywords.message m2)
-    } does {
-      case _ => println("b4 in s1")
     } triggeredBy {
       (Keywords.message m3)
       (Keywords.message m4)
       (Keywords.message m5)
-    }
+    } does {
+      case _ => println("b4 in s1")
+    } 
     logger.info(BehaviorEntity.toString)
     BehaviorEntity().length shouldBe 5
     GlobalProcessingState.resetAll()

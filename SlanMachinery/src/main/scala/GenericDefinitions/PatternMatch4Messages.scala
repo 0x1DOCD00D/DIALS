@@ -15,6 +15,10 @@ case class GenericMessageTemplate(
                                  )
 
 object PatternMatch4Messages:
-  def doMatch(map: (String, () => Unit)): PartialFunction[Any, Unit] = {
-    case GenericMessageTemplate(name, v, f) if name == map._1 => map._2()
+  def onEventRule(map: (String, 
+    (
+      values: List[Double],
+      fields: Option[List[GenericMessageTemplate]]
+    ) => Unit)): PartialFunction[Any, Unit] = {
+    case GenericMessageTemplate(name, v, f) if name == map._1 => map._2(v, f)
   }

@@ -33,15 +33,17 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
         (action b1) does {
           case _ => ()
         };
-        (action b2)
       } switch2 (state st2);
+      
       (state st2) behaves {
-        (action b5)
+        (action b5) does {
+          case _ => ()
+        };
       } switch2 (state st1)
     }
 
     (agent process2) has {
-      (state onlyOneState) behaves (Keywords.behavior b1) switch2 (state onlyOneState)
+      (state onlyOneState) behaves (action b1).get switch2 (state onlyOneState)
     }
 
     (agent process3) has {
@@ -59,18 +61,13 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
   it should "generate three ent definitions" in {
     (agent process1) has {
       (state st1) behaves {
-        (action b1);
-        (action b2)
+        (action b1).get orElse (action b2).get
       } switch2 (state st2) when {
         (resource X).getValues.length > 0 && (resource Y).getValues.head.toInt == 2} timeout 3.second ;
       (state st2) behaves {
         (action b5) does {
           case _ => println("b5 in s2")
-        } does {
-          case _ => val c = 2
-        } does {
-          case _ => ()
-        }
+        } 
       } switch2 (state st1)
     }
 
@@ -78,9 +75,10 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
 
     (agent process3) has {
       (state _SingleState) behaves {
+        case _ => ()
       };
       (state WrongState) behaves {
-        ()
+        case _ => ()
       };
     }
 
@@ -92,18 +90,16 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
   it should "generate one ent definition with multiple actions" in {
     (agent process1) has {
       (state st2) behaves {
-        (action b5) does {
-          case _ => println("b5 in s2")
-        } does {
-          case _ => ()
-        } triggeredBy  {
+        (action b5) triggeredBy  {
           (Keywords.message m1)
           (Keywords.message m2)
         } triggeredBy {
           (Keywords.message m3)
           (Keywords.message m4)
           (Keywords.message m5)
-        }
+        } does {
+          case _ => println("b5 in s2")
+        } 
       } switch2 (state st1)
     }
 
@@ -115,16 +111,16 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
   it should "generate one ent definition with a periodic behavior" in {
     (agent process1) has {
       (state st2) behaves {
-        (action b5) does {
-          case _ => println("b5 in s2")
-        } triggeredBy {
+        (action b5) triggeredBy {
           (Keywords.message m1)
           (Keywords.message m2)
         } triggeredBy {
           (Keywords.message m3)
           (Keywords.message m4)
           (Keywords.message m5)
-        }
+        } does {
+          case _ => println("b5 in s2")
+        } 
       } periodic (1, 2, -1)
     }
 
@@ -136,13 +132,13 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
   it should "generate one ent definition with a timer attached to some states" in {
     (agent process1) has {
       (state st2) behaves {
-        (action b5) does {
-          case _ => println("b5 in s2")
-        } triggeredBy {
+        (action b5) triggeredBy {
           (Keywords.message m3)
           (Keywords.message m4)
           (Keywords.message m5)
-        }
+        } does {
+          case _ => println("b5 in s2")
+        } 
       } switch2 (state st1) when always timeout 1.second
     }
 
@@ -155,8 +151,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
   it should "create agents that can be auto triggered to start a simulation" in {
     (agent process1) has {
       (state st1) behaves {
-        (action b1);
-        (action b2)
+        (action b1).get orElse (action b2).get
       } switch2 (state st2);
 
       (state st2) behaves {
@@ -170,9 +165,10 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
 
     (agent process3) has:
       (state _SingleState) behaves {
+        case _ => ()
       };
       (state WrongState) behaves {
-        ()
+        case _ => ()
       };
 
     logger.info(AgentEntity.toString)
