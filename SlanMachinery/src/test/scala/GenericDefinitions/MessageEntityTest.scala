@@ -18,6 +18,7 @@ import scala.{Dynamic, List}
 import scala.language.dynamics
 import scala.language.postfixOps
 import Keywords.*
+import Utilz.Constants.AllChannelsID
 import org.scalatest.DoNotDiscover
 
 @DoNotDiscover
@@ -54,5 +55,11 @@ class MessageEntityTest extends AnyFlatSpec with Matchers {
     GlobalProcessingState.resetAll()
   }
 
+  it should "put a message into ALL channels" in {
+    ((Keywords.message m1) send AllChannels).map {
+      case (m, c) => (m.name, c.map(_.name).mkString(", ")  )
+    }.toList shouldBe List(("m1", AllChannelsID))
+    GlobalProcessingState.resetAll()
+  }
 
   }

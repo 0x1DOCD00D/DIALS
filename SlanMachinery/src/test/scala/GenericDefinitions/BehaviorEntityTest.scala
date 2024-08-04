@@ -27,10 +27,8 @@ class BehaviorEntityTest extends AnyFlatSpec with Matchers {
 
   it should "generate one behavior definition with multiple actions and messages" in {
     (action b5) does {
-        println("b5 in s2")
-      } does {
-        val c = 2
-      } does { } triggeredBy  {
+      case _ => println("b5 in s2")
+      } triggeredBy  {
         (Keywords.message m1)
         (Keywords.message m2)
       } triggeredBy {
@@ -47,12 +45,12 @@ class BehaviorEntityTest extends AnyFlatSpec with Matchers {
   it should "generate diverse behavior definitions" in {
     (action b1);
     (action b2) does {
-      println("b2 in s1")
+      case _ => println("b2 in s1")
     };
     (action b3) does {
-      println("b3 in s1")
+      case _ => println("b3 in s1")
     } does {
-      println("b3 in s2")
+      case _ => println("b3 in s2")
     } triggeredBy {
       (Keywords.message m1)
       (Keywords.message m2)
@@ -73,7 +71,7 @@ class BehaviorEntityTest extends AnyFlatSpec with Matchers {
       (Keywords.message m1)
       (Keywords.message m2)
     } does {
-      println("b4 in s1")
+      case _ => println("b4 in s1")
     } triggeredBy {
       (Keywords.message m3)
       (Keywords.message m4)

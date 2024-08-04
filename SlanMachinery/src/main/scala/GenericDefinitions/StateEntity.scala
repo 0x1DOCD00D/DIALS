@@ -25,6 +25,12 @@ object StateEntity:
 def always: true = true
 
 class ConditionConstraints(stateEntity: StateEntity, howManyMsgs: Int = 1, c: => Boolean = false):
+  infix def `no condition triggers the switch`(cond: => true): FailureCondition =
+    val newCond = new ConditionConstraints(stateEntity, Int.MinValue, c)
+    stateEntity.conditions = newCond
+    AgentEntity(stateEntity)
+    new FailureCondition(stateEntity)
+    
   infix def when(cond: => Boolean): FailureCondition =
     val newCond = new ConditionConstraints(stateEntity, howManyMsgs, cond)
     stateEntity.conditions = newCond
@@ -62,8 +68,14 @@ class StateEntity(
   override def toString: String =
     s"StateEntity($name, ${behaviors.map(_.toString).mkString})" +
       s" with conditions ${_conditions.toString}"
+  
+  infix def behaves(defBehavior: => Unit): StateEntity =
+    AgentEntity.getCurrentAgentState match
+      case Some(state) => state
+      case None =>
+        throw new IllegalStateException(s"The ent ${AgentEntity.getCurrentAgent} has no current state - impossible!")
 
-  infix def behaves(defBehavior: Unit): StateEntity =
+  infix def onSwitch(onSwitchBehavior: => Unit): StateEntity =
     AgentEntity.getCurrentAgentState match
       case Some(state) => state
       case None =>
@@ -77,3 +89,10 @@ class StateEntity(
     logger.info(s"Switching from state $name to state ${nextState.name} for the ent ${AgentEntity.getCurrentAgent}")
     AgentEntity(this, nextState)
     new ConditionConstraints(this)
+
+  infix def switchOnTimeout(nextState: => StateEntity): FailureCondition =
+    logger.info(s"Switching from state $name to state ${nextState.name} for the ent ${AgentEntity.getCurrentAgent} on timeout only")
+    AgentEntity(this, nextState)
+    val newCond = new ConditionConstraints(this, Int.MinValue)
+    conditions = newCond
+    new FailureCondition(this)

@@ -11,6 +11,7 @@ package GenericDefinitions
 import GenericDefinitions.AgentEntity.logger
 import GenericDefinitions.ModelEntity.DIRECTION.{BIDIRECTIONAL, LEFT2RIGHT, RIGHT2LEFT}
 import GenericDefinitions.ModelEntity.createPartialConnection
+import Utilz.Constants.SenderAgentID
 import Utilz.{ConfigDb, CreateLogger}
 
 import scala.collection.mutable
@@ -187,6 +188,8 @@ object AgentEntity extends EnumeratedNamedEntityInstance:
 
   def getCurrentAgent: Option[String] = agents.headOption.map(_.name)
   def getCurrentAgentState: Option[StateEntity] = agents.headOption.flatMap(_.getCurrentState)
+
+case object SenderAgent extends AgentEntity(SenderAgentID)
 
 class AgentEntity(val name: String) extends DialsEntity:
   private val states: ListBuffer[StateEntity] = ListBuffer()

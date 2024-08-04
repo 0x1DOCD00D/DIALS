@@ -31,12 +31,12 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
       (state st1) behaves {
 //        behavior is already a keyword in scalatest so we can use the keyword action, alternatively
         (action b1) does {
-          println("b1 in s1")
+          case _ => ()
         };
         (action b2)
       } switch2 (state st2);
       (state st2) behaves {
-        (action b5) does {}
+        (action b5)
       } switch2 (state st1)
     }
 
@@ -47,7 +47,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
     (agent process3) has {
       (state onlyOneState) behaves {
         (action b3) does {
-          ()
+          case _ => ()
         }
       }
     }
@@ -65,10 +65,12 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
         (resource X).getValues.length > 0 && (resource Y).getValues.head.toInt == 2} timeout 3.second ;
       (state st2) behaves {
         (action b5) does {
-          println("b5 in s2")
+          case _ => println("b5 in s2")
         } does {
-          val c = 2
-        } does { }
+          case _ => val c = 2
+        } does {
+          case _ => ()
+        }
       } switch2 (state st1)
     }
 
@@ -91,10 +93,10 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
     (agent process1) has {
       (state st2) behaves {
         (action b5) does {
-          println("b5 in s2")
+          case _ => println("b5 in s2")
         } does {
-          val c = 2
-        } does { } triggeredBy  {
+          case _ => ()
+        } triggeredBy  {
           (Keywords.message m1)
           (Keywords.message m2)
         } triggeredBy {
@@ -114,10 +116,8 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
     (agent process1) has {
       (state st2) behaves {
         (action b5) does {
-          println("b5 in s2")
-        } does {
-          val c = 2
-        } does {} triggeredBy {
+          case _ => println("b5 in s2")
+        } triggeredBy {
           (Keywords.message m1)
           (Keywords.message m2)
         } triggeredBy {
@@ -137,7 +137,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
     (agent process1) has {
       (state st2) behaves {
         (action b5) does {
-          println("b5 in s2")
+          case _ => println("b5 in s2")
         } triggeredBy {
           (Keywords.message m3)
           (Keywords.message m4)
@@ -161,10 +161,8 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
 
       (state st2) behaves {
         (action b5) does {
-          println("b5 in s2")
-        } does {
-          val c = 2
-        } does {}
+          case _ => println("b5 in s2")
+        }
       } switch2 (state st1)
     } autotrigger (state st1);
 

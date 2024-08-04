@@ -9,13 +9,14 @@
 package GenericDefinitions
 
 import GenericDefinitions.BehaviorEntity.{behaviors, logger}
+import Utilz.Constants.EmptyBehaviorID
 import Utilz.CreateLogger
 
 import scala.collection.mutable.ListBuffer
 
-case object EmptyBehavior extends BehaviorEntity("EmptyBehavior")
+case object EmptyBehavior extends BehaviorEntity(EmptyBehaviorID)
 
-class BehaviorEntity(val name: String, val triggerMsgs: ListBuffer[MessageEntity] = ListBuffer(), val actualActions: ListBuffer[() => Unit] = ListBuffer()) extends DialsEntity:
+class BehaviorEntity(val name: String, val triggerMsgs: ListBuffer[MessageEntity] = ListBuffer(), val actualActions: ListBuffer[PartialFunction[Any, Unit]] = ListBuffer()) extends DialsEntity:
   override def toString: String = s"$name " 
     + (if actualActions.nonEmpty then s"has ${actualActions.toList.length} actions" else "is empty")
     + (if triggerMsgs.nonEmpty then s" and is triggered by ${triggerMsgs.toList.length} messages" else " and it's triggered by all messages")
@@ -35,8 +36,8 @@ class BehaviorEntity(val name: String, val triggerMsgs: ListBuffer[MessageEntity
       this
     else throw new IllegalStateException(s"Behavior $name's message triggers $msgs cannot be defined within other entity ${GlobalProcessingState.getCurrentProcessingState}")
     
-  infix def does(defBehavior: => Unit): BehaviorEntity =
-    val nb = new BehaviorEntity(name, ListBuffer(), ListBuffer(() => defBehavior))
+  infix def does(defBehavior: PartialFunction[Any, Unit]): BehaviorEntity =
+    val nb = new BehaviorEntity(name, ListBuffer(), ListBuffer(defBehavior))
     if GlobalProcessingState.isAgent then
       AgentEntity(nb)
       this
@@ -48,7 +49,7 @@ class BehaviorEntity(val name: String, val triggerMsgs: ListBuffer[MessageEntity
         case Right(_) =>
           behaviors.toList.find(_.name == name) match
             case Some(b) =>
-              b.actualActions.append(() => defBehavior)
+              b.actualActions.append(defBehavior)
               GlobalProcessingState(NoEntity)
               this
             case None =>

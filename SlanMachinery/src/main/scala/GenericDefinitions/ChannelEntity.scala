@@ -9,13 +9,14 @@
 package GenericDefinitions
 
 import GenericDefinitions.ChannelEntity.logger
+import Utilz.Constants.AllChannelsID
 import Utilz.{ConfigDb, CreateLogger}
 
 import scala.collection.mutable.ListBuffer
 
-case object AllChannels extends DialsEntity
+case object AllChannels extends ChannelEntity(AllChannelsID)
 
-class ChannelEntity private (val name: String, val messages: ListBuffer[(MessageEntity, Option[BehaviorEntity])] = ListBuffer()) extends DialsEntity:
+class ChannelEntity private[GenericDefinitions] (val name: String, val messages: ListBuffer[(MessageEntity, Option[BehaviorEntity])] = ListBuffer()) extends DialsEntity:
   override def toString: String =
     s"channel $name" +
       (if messages.isEmpty then " transports all types of messages"

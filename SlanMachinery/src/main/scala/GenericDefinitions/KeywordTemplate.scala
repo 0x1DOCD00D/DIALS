@@ -19,6 +19,14 @@ trait DialsEntity
 
 case object NoEntity extends DialsEntity
 
+class KeywordTemplate4String extends Dynamic {
+  val logger: Logger = CreateLogger(classOf[KeywordTemplate4String])
+
+  infix def selectDynamic(name: String): String = 
+    if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Creating an entity named $name")
+    name
+}
+
 class KeywordTemplate[T <: DialsEntity](classType: Class[T]) extends Dynamic {
   val logger: Logger = CreateLogger(classOf[KeywordTemplate[T]])
 

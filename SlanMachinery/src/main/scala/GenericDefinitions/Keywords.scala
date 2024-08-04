@@ -17,7 +17,9 @@ object Keywords:
   val action = new KeywordTemplate(classOf[BehaviorEntity])
   val resource = new KeywordTemplate(classOf[ResourceEntity])
   val message = new KeywordTemplate(classOf[MessageEntity])
+  val dispatch = new KeywordTemplate(classOf[MessageEntity])
   val field = new KeywordTemplate(classOf[FieldEntity])
   val model = new KeywordTemplate(classOf[ModelEntity])
   val pdf = new KeywordTemplate(classOf[DistributionEntity])
   val instance = new KeywordTemplate(classOf[EntityInstanceAlias])
+  val received = new KeywordTemplate4String

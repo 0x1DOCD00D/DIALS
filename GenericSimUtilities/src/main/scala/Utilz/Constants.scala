@@ -22,6 +22,9 @@ object Constants:
   final val DotSeparator = "\\."
   final val Dot = "."
   final val ArgumentUnderscore = "_"
+  final val EmptyBehaviorID = "__EmptyBehavior"
+  final val AllChannelsID = "__AllChannels"
+  final val SenderAgentID = "__SenderAgentID"
   val MathApacheDistributionsPkgName = "org.apache.commons.math3.distribution"
   val DefaultRandomGenerator: String = "Well1024a"
 

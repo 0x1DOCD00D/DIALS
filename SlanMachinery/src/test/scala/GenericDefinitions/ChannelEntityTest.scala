@@ -1,8 +1,8 @@
 /*
  * Copyright (newConnection) 7/13/24, 2:27 PM, 13. Mark Grechanik and Lone Star Consulting, Inc. All rights reserved.
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  
+ *
  *  See the License for the specific language governing permissions and limitations under the License.
  */
 
@@ -40,12 +40,12 @@ class ChannelEntityTest extends AnyFlatSpec with Matchers {
   it should "generate message definitions with messages" in {
     (channel c1) transports (Keywords.message m1)
     (channel c2) transports {
-      (Keywords.message m1);
-      (Keywords.message m2) triggers (action b1);
-      (Keywords.message m2) triggers (action b2);
-      (Keywords.message m3)
+      (dispatch m1);
+      (dispatch m2) triggers (action b1);
+      (dispatch m2) triggers (action b2);
+      (dispatch m3)
     }
-    (channel c3) transports (Keywords.message m10)
+    (channel c3) transports (dispatch m10)
     logger.info(ChannelEntity.toString)
     ChannelEntity() shouldBe List("c3", "c2", "c1")
     GlobalProcessingState.resetAll()

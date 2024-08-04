@@ -20,6 +20,8 @@ import scala.language.postfixOps
 import Keywords.*
 import org.scalatest.DoNotDiscover
 import scala.concurrent.duration.DurationInt
+import PatternMatch4Messages.*
+
 
 @DoNotDiscover
 class FullSimulationTests extends AnyFlatSpec with Matchers {
@@ -28,19 +30,19 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
 
   it should "generate a model definition for a distributed alternator simulation" in {
     (resource randomWait) := ((pdf UniformIntegerDistribution) as(5, 10));
-    (Keywords.message AskPermission);
-    (Keywords.message NoWayMyTurn);
-    (Keywords.message Goahead);
-    (Keywords.message InformSinkProcess) := (pdf NormalDistribution) as (100, 10);
+    (dispatch AskPermission);
+    (dispatch NoWayMyTurn);
+    (dispatch Goahead);
+    (dispatch InformSinkProcess) := (pdf NormalDistribution) as (100, 10);
 
     (channel ControlAction) transports {
-      (Keywords.message AskPermission);
-      (Keywords.message NoWayMyTurn);
-      (Keywords.message Goahead);
+      (dispatch AskPermission);
+      (dispatch NoWayMyTurn);
+      (dispatch Goahead);
     };
 
     (channel Data) transports {
-      (Keywords.message InformSinkProcess);
+      (dispatch InformSinkProcess);
     };
     
     (agent MessageSinkProcess) has {
@@ -48,37 +50,49 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
 
       (state Wait4Messages) behaves {
         (action ReceiveMessage) does {
-          (resource messageCount) := (resource messageCount).getValues.head.toInt + 1
+          doMatch {
+            (dispatch X).name -> 
+              (() => 
+                (resource messageCount) := (resource messageCount).getValues.head.toInt + 1
+                )
+          } orElse doMatch {
+            (dispatch Y).name -> (() => println("Received message Y."))
+          } orElse doMatch {
+            (dispatch Z).name -> (() => println("Received message Z."))
+          }
         }
       }  
     }  autotrigger (state Wait4Message);
     
     (agent AlternatorProcess) has {
       (resource responseCount) := 0;
-      (resource sentNotification) := false;
+      (resource sentNotification) := 0;
       (resource numberOfNeighbors) := 2;
       (resource responses)
       
       (state randomWait) behaves {
         //when the random wait time is expired the switch occurs
         //if a neighbor contacts you with AskPermission then respond with Goahead
-      } switch2 (state ContactNeighbors) when always timeout (resource randomWait).getValues.take(1).head.toInt.seconds;
+        (dispatch GoAhead) respond SenderAgent;
+      } switchOnTimeout (state ContactNeighbors) timeout (resource randomWait).getValues.take(1).head.toInt.seconds;
       
-      (state ContactNeighbors) behaves {
+      (state ContactNeighbors) onSwitch {
         //send message AskPermission to your neighbors
         //set the sentNotification resource to true
-        //respond to AskPermission with NoWayMyTurn
-        (action SendRequest);
-      } switch2 (state Wait4ResponsesFromNeighbors)
+        val sent = (dispatch AskPermission) send (channel ControlAction);
+        (resource sentNotification) := sent.toList.length;
+      } switch2 (state Wait4ResponsesFromNeighbors) when (resource sentNotification).getValues.head.toInt == 1;
 
       (state Wait4ResponsesFromNeighbors) behaves {
         //when a response is received the resource responseCount is incremented
         //when the number of responses equals the number of neighbors, the state changes
         //or when the wait time is expired the switch occurs
         //respond to AskPermission with NoWayMyTurn
+        
         (action ReceiveResponse) does {
-          (resource responses).storeValues((Keywords.message response))
-          (resource responseCount) := (resource responseCount).getValues.head.toInt + 1
+          case _ =>
+            (resource responses).storeValues((dispatch response))
+            (resource responseCount) := (resource responseCount).getValues.head.toInt + 1
         }
       } switch2 (state How2Proceed) when {
         (resource responseCount).getValues.head.toInt == (resource numberOfNeighbors).getValues.head.toInt
