@@ -9,7 +9,7 @@
 package GenericDefinitions
 
 import GenericDefinitions.ResourceEntity.{containerResourcesStack, logger}
-import Utilz.{ConfigDb, CreateLogger}
+import Utilz.{ConfigDb, Constants, CreateLogger}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -22,6 +22,7 @@ import scala.collection.mutable.ListBuffer
 * */
 
 class ResourceEntity private (val name: String, val fieldResources: ListBuffer[ResourceEntity] = ListBuffer(), var values: Array[Any] = Array()) extends DialsEntity:
+  private val linearSequence: LazyList[Int] = LazyList.from(0)
   override def toString: String =
     s"resource $name" +
       (if values.isEmpty then " holds no values" else s" holds value(s) ${values.mkString(",")}") +
@@ -34,12 +35,20 @@ class ResourceEntity private (val name: String, val fieldResources: ListBuffer[R
   def storeValues[T <: DistributionEntity | DialsEntity | AnyVal](setV: T*): Unit =
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Setting the value of the resource $name to $setV")
     values = setV.toArray
-    
-  def getValues: Array[Double] = values match
+
+  def Values: Array[Double] = values match
     case a: Array[Double] => a
     case a: Array[Int] => a.map(_.toDouble)
     case a: Array[Long] => a.map(_.toDouble)
     case a: Array[DistributionEntity] => ???
+
+
+  def getValues(num: Int = 1): Array[Double] =
+    if name == Constants.LinearSequence then 
+      val res = linearSequence.take(num).toArray.map(_.toDouble)
+      linearSequence.drop(num)
+      res
+    else Values
 
   infix def contains[T](resources: => T): ResourceEntity =
     if containerResourcesStack.isEmpty then
@@ -68,10 +77,10 @@ object ResourceEntity:
 
   override def toString: String = topLevelResources.map(_.toString).mkString("\n")
 
-  def resetAll(): Unit = 
+  def resetAll(): Unit =
     topLevelResources.clear()
     containerResourcesStack.clear()
-    
+
   def findResource(ref: ResourceEntity): Option[ResourceEntity] =
     topLevelResources.find(_.name == ref.name) match
       case Some(r) => Some(r)
@@ -84,7 +93,7 @@ object ResourceEntity:
     if GlobalProcessingState.isAgent then
       if containerResourcesStack.isEmpty then
         AgentEntity(newRes)
-      else containerResourcesStack.top.fieldResources += newRes 
+      else containerResourcesStack.top.fieldResources += newRes
       newRes
     else if GlobalProcessingState.isResource then
       if containerResourcesStack.nonEmpty then

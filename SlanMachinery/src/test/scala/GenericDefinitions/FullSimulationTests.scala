@@ -30,8 +30,8 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
 
   it should "generate a model definition for a distributed alternator simulation" in {
     (resource randomWait) := ((pdf UniformIntegerDistribution) as (5, 10));
-    (resource randomIDGenerator) := ((pdf GlobalLinearSequence) as (1));
-    (dispatch AskPermission)
+    (resource LinearSequence) := 1;
+    (dispatch AskPermission);
     (dispatch NoWayMyTurn);
     (dispatch Goahead);
     (dispatch InformSinkProcess) := (pdf NormalDistribution) as (100, 10);
@@ -55,7 +55,7 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
             onEventRule {
               (received X) ->
                 {
-                  (v, f) => (resource messageCount) := (resource messageCount).getValues.head.toInt + 1
+                  (v, f) => (resource messageCount) := (resource messageCount).Values.head.toInt + 1
                 }
             } orElse onEventRule {
               (received Y) -> ((v,f) => println("Received message Y."))
@@ -71,7 +71,7 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
       (resource sentNotification) := 0;
       (resource numberOfNeighbors) := 2;
       (resource responses)
-      (resource ProcessID) := (resource randomIDGenerator).getValues.take(1).head.toInt;
+      (resource ProcessID) := (resource randomIDGenerator).Values.take(1).head.toInt;
 
       (state randomWait) behaves {
         //when the random wait time is expired the switch occurs
@@ -80,15 +80,15 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
           onEventRule {
             (received AskPermission) -> ((v,f) => (dispatch GoAhead) respond SenderAgent)
           }
-      } switchOnTimeout (state ContactNeighbors) timeout (resource randomWait).getValues.take(1).head.toInt.seconds;
+      } switchOnTimeout (state ContactNeighbors) timeout (resource randomWait).Values.take(1).head.toInt.seconds;
 
       (state ContactNeighbors) onSwitch {
         //send message AskPermission to your neighbors
         //set the sentNotification resource to true
-        val msgAsk4Permission = (dispatch AskPermission) := (resource ProcessID).getValues.head.toInt;
+        val msgAsk4Permission = (dispatch AskPermission) := (resource ProcessID).Values.head.toInt;
         val sent = msgAsk4Permission send (channel ControlAction);
         (resource sentNotification) := sent.toList.length;
-      } switch2 (state Wait4ResponsesFromNeighbors) when (resource sentNotification).getValues.head.toInt == 1;
+      } switch2 (state Wait4ResponsesFromNeighbors) when (resource sentNotification).Values.head.toInt == 1;
 
       (state Wait4ResponsesFromNeighbors) behaves {
         //when a response is received the resource responseCount is incremented
@@ -102,24 +102,24 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
             onEventRule {
             (received AskPermission) -> { (v,f) => (dispatch NoWayMyTurn) respond SenderAgent; }
           } orElse onEventRule {
-            (received GoAhead) -> ((v,f) => (resource responseCount) := (resource responseCount).getValues.take(1).head.toInt + 1)
+            (received GoAhead) -> ((v,f) => (resource responseCount) := (resource responseCount).Values.take(1).head.toInt + 1)
           } orElse onEventRule {
             (received NoWayMyTurn) -> ((v,f) =>
               val agentID = v.asInstanceOf[List[Double]].head.toInt;
-              if (resource ProcessID).getValues.head.toInt > agentID then
-                (resource responseCount) := (resource responseCount).getValues.head.toInt + 1
+              if (resource ProcessID).Values.head.toInt > agentID then
+                (resource responseCount) := (resource responseCount).Values.head.toInt + 1
             )
           }
         }
       } switch2 (state Proceed) when {
-        (resource responseCount).getValues.head.toInt == (resource numberOfNeighbors).getValues.head.toInt
+        (resource responseCount).Values.head.toInt == (resource numberOfNeighbors).Values.head.toInt
       } timeout 3.seconds fail2 (state randomWait);
     }
 
     (state Proceed) onSwitch {
       (dispatch InformSinkProcess) send (channel Data);
       (resource sentNotification) := 1;
-    } switch2 (state randomWait) when ((resource sentNotification).getValues.head.toInt == 1) timeout 3.seconds
+    } switch2 (state randomWait) when ((resource sentNotification).Values.head.toInt == 1) timeout 3.seconds
 
     (model distributedAlternator) `is defined as` {
       |(agent AlternatorProcess)| := exactly (instance A);

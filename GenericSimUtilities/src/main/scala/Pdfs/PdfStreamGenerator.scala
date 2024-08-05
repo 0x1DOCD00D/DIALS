@@ -31,7 +31,7 @@ object PdfStreamGenerator:
     generator match
       case Left(errorMessage) =>
         if errorMessage != null then throw new PdfStreamGeneratorException(errorMessage) else throw new PdfStreamGeneratorException("RandomGenerator failed.")
-        
+
       case Right(obj) => obj match {
           case v: AbstractIntegerDistribution => v.sample() #:: generateSamples(generator)
           case v: AbstractRealDistribution => v.sample() #:: generateSamples(generator)

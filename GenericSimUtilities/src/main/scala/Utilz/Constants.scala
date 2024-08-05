@@ -60,3 +60,4 @@ object Constants:
   final val WeibullDistribution: String = nameOf(WeibullDistribution)
   final val ZipfDistribution: String = nameOf(ZipfDistribution)
   final val EnumeratedIntegerDistribution: String = nameOf(EnumeratedIntegerDistribution)
+  final val LinearSequence: String = nameOf(LinearSequence) 

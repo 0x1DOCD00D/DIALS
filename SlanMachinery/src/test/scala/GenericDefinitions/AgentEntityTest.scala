@@ -34,7 +34,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
           case _ => ()
         };
       } switch2 (state st2);
-      
+
       (state st2) behaves {
         (action b5) does {
           case _ => ()
@@ -63,11 +63,11 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
       (state st1) behaves {
         (action b1).get orElse (action b2).get
       } switch2 (state st2) when {
-        (resource X).getValues.length > 0 && (resource Y).getValues.head.toInt == 2} timeout 3.second ;
+        (resource X).Values.length > 0 && (resource Y).Values.head.toInt == 2} timeout 3.second ;
       (state st2) behaves {
         (action b5) does {
           case _ => println("b5 in s2")
-        } 
+        }
       } switch2 (state st1)
     }
 
@@ -99,7 +99,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
           (Keywords.message m5)
         } does {
           case _ => println("b5 in s2")
-        } 
+        }
       } switch2 (state st1)
     }
 
@@ -120,7 +120,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
           (Keywords.message m5)
         } does {
           case _ => println("b5 in s2")
-        } 
+        }
       } periodic (1, 2, -1)
     }
 
@@ -138,7 +138,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
           (Keywords.message m5)
         } does {
           case _ => println("b5 in s2")
-        } 
+        }
       } switch2 (state st1) when always timeout 1.second
     }
 
