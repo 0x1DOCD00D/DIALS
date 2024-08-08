@@ -18,5 +18,6 @@ class TestDriver extends Suites (
   new ResourceEntityTest, 
   new GroupEntityTest, 
   new BehaviorEntityTest,
-  new ModelEntityTest
+  new ModelEntityTest,
+  new FullSimulationTests
 )

@@ -8,13 +8,11 @@
 
 package GenericDefinitions
 
-import org.scalatest.funsuite.AnyFunSuiteLike
-import Utilz.{Constants, CreateLogger}
+import Utilz.CreateLogger
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.slf4j.Logger
 
-import scala.Dynamic
 import scala.language.dynamics
 import scala.language.postfixOps
 import Keywords.*
@@ -24,6 +22,13 @@ import org.scalatest.DoNotDiscover
 class ResourceEntityTest extends AnyFlatSpec with Matchers {
   val logger: Logger = CreateLogger(classOf[AgentEntityTest])
   behavior of "resource entities"
+
+  it should "generate one pdf resource definition" in {
+    (resource pdfres) := (pdf NormalDistribution) as (10, 20)
+    logger.info(ResourceEntity.toString)
+    ResourceEntity() shouldBe List("pdfres")
+    GlobalProcessingState.resetAll()
+  }
 
   it should "generate resource definitions" in {
     (resource res1) := (10, 20, 3.14)

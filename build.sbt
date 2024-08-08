@@ -55,6 +55,15 @@ run / cinnamon := true
 test / cinnamon := true
 cinnamonLogLevel := "INFO"
 
+Test / testGrouping := (Test / definedTests).value map { test =>
+  val options = ForkOptions().withRunJVMOptions(Vector.empty)
+  Tests.Group(
+    name = test.name,
+    tests = Seq(test),
+    runPolicy = Tests.SubProcess(options)
+  )
+}
+
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
   "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,

@@ -9,10 +9,12 @@
 package GenericDefinitions
 
 import GenericDefinitions.ResourceEntity.{containerResourcesStack, logger}
+import Pdfs.PdfStreamGenerator
 import Utilz.{ConfigDb, Constants, CreateLogger}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
+import InputDataProcessor.{TypeInfo, *}
 
 /*
 * A resource can be defined within an ent or independent of any other entity. A composite resource is a collection of one or more resources.
@@ -21,34 +23,20 @@ import scala.collection.mutable.ListBuffer
 * If a resource is declared within an ent, which is a top-level entity, then it should be added to the list of resources of the ent.
 * */
 
-class ResourceEntity private (val name: String, val fieldResources: ListBuffer[ResourceEntity] = ListBuffer(), var values: Array[Any] = Array()) extends DialsEntity:
-  private val linearSequence: LazyList[Int] = LazyList.from(0)
+class ResourceEntity private (val name: String, val fieldResources: ListBuffer[ResourceEntity] = ListBuffer(), var values: LazyList[Double] = LazyList.empty, val dialsObjects: ListBuffer[DialsEntity] = ListBuffer() ) extends DialsEntity:
+  private val linearSequence: LazyList[Int] = LazyList.from(1)
   override def toString: String =
     s"resource $name" +
-      (if values.isEmpty then " holds no values" else s" holds value(s) ${values.mkString(",")}") +
+      (if values.isEmpty then " holds no values" else s" holds values") +
       (if fieldResources.isEmpty then " and it doesn't have any fields"
-      else
-        s" has fields ${fieldResources.map(_.name)}\n" +
-        fieldResources.map(_.toString).mkString("\n")
-        )
+      else s" has fields ${fieldResources.map(_.name)}\n")
 
-  def storeValues[T <: DistributionEntity | DialsEntity | AnyVal](setV: T*): Unit =
-    if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Setting the value of the resource $name to $setV")
-    values = setV.toArray
-
-  def Values: Array[Double] = values match
-    case a: Array[Double] => a
-    case a: Array[Int] => a.map(_.toDouble)
-    case a: Array[Long] => a.map(_.toDouble)
-    case a: Array[DistributionEntity] => ???
-
-
-  def getValues(num: Int = 1): Array[Double] =
-    if name == Constants.LinearSequence then 
-      val res = linearSequence.take(num).toArray.map(_.toDouble)
-      linearSequence.drop(num)
-      res
-    else Values
+  def getValues: LazyList[Double] =
+    if name == Constants.LinearSequence then linearSequence.map(_.toDouble)
+    else if values.isEmpty then
+      logger.error(s"Resource $name has no values")
+      LazyList.empty
+    else values
 
   infix def contains[T](resources: => T): ResourceEntity =
     if containerResourcesStack.isEmpty then
@@ -63,12 +51,12 @@ class ResourceEntity private (val name: String, val fieldResources: ListBuffer[R
     if containerResourcesStack.isEmpty then GlobalProcessingState(NoEntity)
     this
 
-  infix def :=[T <: DistributionEntity | AnyVal](setV: T*): Unit =
+  infix def :=[T <: DistributionEntity | AnyVal | DialsEntity](setV: T*)(using ti: TypeInfo[T]): Unit =
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Setting the value of the resource $name to $setV")
-    values = setV.toArray
-
-  //TODO: need to implement the logic of the resource value retrieval
-  def getStoredValues: Array[Any] = values //need to look up the global table of resources
+    val (numbers, dialsObjs) = InputDataProcessor(setV*)
+    if !numbers.isEmpty then values = numbers
+    if !dialsObjs.isEmpty then dialsObjects.prependAll(dialsObjs)
+    
 
 object ResourceEntity:
   private val topLevelResources: ListBuffer[ResourceEntity] = ListBuffer()
@@ -93,8 +81,9 @@ object ResourceEntity:
     if GlobalProcessingState.isAgent then
       if containerResourcesStack.isEmpty then
         AgentEntity(newRes)
-      else containerResourcesStack.top.fieldResources += newRes
-      newRes
+      else 
+        containerResourcesStack.top.fieldResources += newRes
+        newRes
     else if GlobalProcessingState.isResource then
       if containerResourcesStack.nonEmpty then
         containerResourcesStack.top.fieldResources += newRes

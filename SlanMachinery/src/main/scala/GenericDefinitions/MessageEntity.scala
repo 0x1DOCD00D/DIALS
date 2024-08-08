@@ -46,7 +46,7 @@ class MessageEntity private(val name: String, val fields: ListBuffer[FieldEntity
     else logger.error(s"Message $name cannot be defined within other entity ${GlobalProcessingState.getCurrentProcessingState}")
 
   infix def :=[T](setV: T*): MessageEntity =
-    logger.info(s"Setting the value of the resource $name to $setV")
+    if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Setting the value of the message entity $name to $setV")
     values = setV.toArray
     this
 

@@ -15,7 +15,6 @@ import Utilz.Constants.SenderAgentID
 import Utilz.{ConfigDb, CreateLogger}
 
 import scala.collection.mutable
-import scala.{:+, Dynamic}
 import scala.collection.mutable.ListBuffer
 import scala.language.dynamics
 import scala.language.postfixOps
@@ -180,11 +179,18 @@ object AgentEntity extends EnumeratedNamedEntityInstance:
       throw new IllegalStateException(s"No state is defined even though the trigger message is specified: ${msgTrigger.name}")
 
 
-  def apply(resourceEntity: ResourceEntity): Unit =
+  def apply(resourceEntity: ResourceEntity): ResourceEntity =
     if agents.isEmpty then throw new IllegalStateException(s"No ent is defined even though the resource is specified: ${resourceEntity.name}")
     else
-      logger.info(s"Creating a resource entity named ${resourceEntity.name} under the ent ${agents.head.name}")
-      agents.head.resources.prependAll(List(resourceEntity))
+      logger.info(s"Creating a resource entity named ${resourceEntity.name} under the agent ${agents.head.name}")
+      val found = agents.head.resources.find(_.name == resourceEntity.name)
+      if found.isEmpty then
+        val topResourceFound = ResourceEntity.findResource(resourceEntity)
+        if topResourceFound.isEmpty then
+          agents.head.resources.prependAll(List(resourceEntity))
+          resourceEntity
+        else topResourceFound.get
+      else found.get
 
   def getCurrentAgent: Option[String] = agents.headOption.map(_.name)
   def getCurrentAgentState: Option[StateEntity] = agents.headOption.flatMap(_.getCurrentState)

@@ -63,7 +63,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
       (state st1) behaves {
         (action b1).get orElse (action b2).get
       } switch2 (state st2) when {
-        (resource X).Values.length > 0 && (resource Y).Values.head.toInt == 2} timeout 3.second ;
+        (resource X).getValues.toList.length > 0 && (resource Y).getValues.toList.head.toInt == 2} timeout 3.second ;
       (state st2) behaves {
         (action b5) does {
           case _ => println("b5 in s2")
