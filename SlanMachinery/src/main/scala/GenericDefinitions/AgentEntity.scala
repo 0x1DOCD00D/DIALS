@@ -77,9 +77,10 @@ object AgentEntity extends EnumeratedNamedEntityInstance:
 
   def apply(): List[String] = agents.map(_.name).toList
 
-  def apply(name: String): AgentEntity =
+  def apply(name: String): AgentEntity|EntityInstanceAlias =
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Creating an ent entity named $name")
     val found = agents.toList.find(a => a.name == name)
+    val foundInAliases = enumeratedAliases.find(a => a.alias == name)
     if found.isDefined then
       if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Agent $name is already defined.")
       val agt = found.get
@@ -89,6 +90,15 @@ object AgentEntity extends EnumeratedNamedEntityInstance:
       agents.prependAll(l)
       joinGroup(agt)
       agt
+    else if foundInAliases.isDefined then
+      if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Agent $name is already defined in aliases.")
+      val agt = foundInAliases.get.ent.get.asInstanceOf[AgentEntity]
+      val (l, r) = agents.partition(a => a.name == agt.name)
+      agents.clear()
+      agents.appendAll(r)
+      agents.prependAll(l)
+      joinGroup(agt)
+      foundInAliases.get
     else
       val agent = new AgentEntity(name)
       agents.prependAll(List(agent))
