@@ -11,7 +11,7 @@ package GenericDefinitions
 import com.google.common.graph.{MutableValueGraph, ValueGraphBuilder}
 
 type ModelGraphNodeIndexed = (ModelGraphNode, Int)
-type ModelGraphNode = AgentEntity|GroupEntity
+type ModelGraphNode = AgentEntity|GroupEntity|EntityInstanceAlias
 type ModelGraphEdge = ChannelEntity
 type SimulationTopology = MutableValueGraph[ModelGraphNode, ModelGraphEdge]
 
