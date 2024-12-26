@@ -9,8 +9,7 @@
 package GenericDefinitions
 
 import GenericDefinitions.AgentEntity.logger
-import GenericDefinitions.ModelEntity.DIRECTION.{BIDIRECTIONAL, LEFT2RIGHT, RIGHT2LEFT}
-import GenericDefinitions.ModelEntity.createPartialConnection
+import GenericDefinitions.ModelEntity.DIRECTION.*
 import Utilz.Constants.SenderAgentID
 import Utilz.{ConfigDb, CreateLogger}
 
