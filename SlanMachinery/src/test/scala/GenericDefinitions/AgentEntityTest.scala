@@ -172,7 +172,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
       };
 
     logger.info(AgentEntity.toString)
-    AgentEntity.autoTriggeredAgents().toList.map((a: AgentEntity, s:StateEntity) => (a.name, s.name)) shouldBe List(("process1", "st1"))
+    AgentEntity.autoTriggeredAgents().map((a: AgentEntity, s:StateEntity) => (a.name, s.name)) shouldBe List(("process1", "st1"))
     GlobalProcessingState.resetAll()
   }
 
@@ -198,7 +198,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
     } autotrigger (state st1);
 
     logger.info(AgentEntity.toString)
-    AgentEntity.autoTriggeredAgents().toList.map((a: AgentEntity, s: StateEntity) => (a.name, s.name)) shouldBe List(("process1", "st1"))
+    AgentEntity.autoTriggeredAgents().map((a: AgentEntity, s: StateEntity) => (a.name, s.name)) shouldBe List(("process1", "st1"))
     GlobalProcessingState.resetAll()
   }
 

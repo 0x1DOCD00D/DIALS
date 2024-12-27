@@ -65,10 +65,10 @@ class StateEntity(
   private var _conditions: ConditionConstraints = new ConditionConstraints(this)
   private var _doOnFailure: FailureCondition = new FailureCondition(this)
 
-  def conditions = _conditions
+  def conditions: ConditionConstraints = _conditions
   def conditions_=(cond: ConditionConstraints): Unit = _conditions = cond
 
-  def failure = _doOnFailure
+  def failure: FailureCondition = _doOnFailure
   def failure_=(cond: FailureCondition): Unit = _doOnFailure = cond
 
   override def toString: String =
