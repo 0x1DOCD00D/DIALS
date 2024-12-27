@@ -188,10 +188,10 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
           (dispatch shutdownMsg)
           } does {
           case _ => (dispatch infoMsg) send (channel X)
-        }
-      } switch2 (state st3) when {
+        } orElse (action b3).get
+      } switch2 (state st1) when {
         (resource Storage).getValues.toList.head.toInt == 2
-      } timeout 3.seconds
+      } orSwitch2 (state st3)
       (state st3) behaves {
         (action b5).get
       } switch2 (state st3) when always timeout 10.seconds
