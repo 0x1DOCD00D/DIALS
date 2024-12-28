@@ -15,6 +15,11 @@ case class GenericMessageTemplate(
                                  )
 
 object PatternMatch4Messages:
+  /*
+  onEventRule {
+            (received AskPermission) -> { (v,f) => (dispatch NoWayMyTurn) respond SenderAgent; }
+          }
+  * */
   def onEventRule(map: (String, 
     (
       values: List[Double],
