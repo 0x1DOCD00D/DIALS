@@ -99,7 +99,10 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
         (action ReceiveResponse) does {
             (resource responses) := (dispatch response)
             onEventRule {
-            (received AskPermission) -> { (v,f) => (dispatch NoWayMyTurn) respond SenderAgent }
+            (received AskPermission) -> { (v,f) =>
+              (resource Storage) := v.asInstanceOf
+              (dispatch NoWayMyTurn) respond SenderAgent
+            }
           } orElse onEventRule {
             (received GoAhead) -> ((v,f) => (resource responseCount) := (resource responseCount).getValues.toList.take(1).head.toInt + 1)
           } orElse onEventRule {

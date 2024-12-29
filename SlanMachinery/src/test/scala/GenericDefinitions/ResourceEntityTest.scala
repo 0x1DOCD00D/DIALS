@@ -50,14 +50,14 @@ class ResourceEntityTest extends AnyFlatSpec with Matchers {
     (resource res2) contains {
       (resource contained1) := (10, 20, 3.14);
       (resource contained2) contains {
-        (resource contained3) := (pdf NormalDistribution) as(10, 20)
+        (resource contained3) := (pdf NormalDistribution) as (10, 20)
       } := 20;
     }
     (agent a2) has {
       (resource res2) contains {
         (resource contained1) := (10, 20, 3.14);
         (resource contained2) contains {
-          (resource contained3) := (pdf NormalDistribution) as(10, 20)
+          (resource contained3) := (pdf NormalDistribution) as (10, 20)
         } := 20;
       }
     }
