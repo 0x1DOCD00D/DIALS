@@ -172,7 +172,33 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
       };
 
     logger.info(AgentEntity.toString)
-    AgentEntity.autoTriggeredAgents().toList.map((a: AgentEntity, s:StateEntity) => (a.name, s.name)) shouldBe List(("process1", "st1"))
+    AgentEntity.autoTriggeredAgents().map((a: AgentEntity, s:StateEntity) => (a.name, s.name)) shouldBe List(("process1", "st1"))
+    GlobalProcessingState.resetAll()
+  }
+
+  it should "create an agent with three nondeterministic transitioned states" in {
+    (agent process1) has {
+      (state st1) behaves {
+        (action b1).get orElse (action b2).get
+      } switch2 (state st2);
+
+      (state st2) behaves {
+        (action b5) triggeredBy {
+          (dispatch controlMsg)
+          (dispatch shutdownMsg)
+          } does {
+          case _ => (dispatch infoMsg) send (channel X)
+        } orElse (action b3).get
+      } switch2 (state st1) when {
+        (resource Storage).getValues.toList.head.toInt == 2
+      } orSwitch2 (state st3)
+      (state st3) behaves {
+        (action b5).get
+      } switch2 (state st3) when always timeout 10.seconds
+    } autotrigger (state st1);
+
+    logger.info(AgentEntity.toString)
+    AgentEntity.autoTriggeredAgents().map((a: AgentEntity, s: StateEntity) => (a.name, s.name)) shouldBe List(("process1", "st1"))
     GlobalProcessingState.resetAll()
   }
 

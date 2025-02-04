@@ -51,6 +51,11 @@ class FailureCondition(stateEntity: StateEntity, fs: => Option[StateEntity] = No
     AgentEntity(stateEntity)
     newFail
 
+  infix def orSwitch2(failState: => StateEntity): ConditionConstraints =
+    AgentEntity(stateEntity)
+    new ConditionConstraints(stateEntity)
+
+
 class StateEntity(
                    val name: String,
                    val behaviors: ListBuffer[BehaviorEntity] = ListBuffer()
@@ -60,10 +65,10 @@ class StateEntity(
   private var _conditions: ConditionConstraints = new ConditionConstraints(this)
   private var _doOnFailure: FailureCondition = new FailureCondition(this)
 
-  def conditions = _conditions
+  def conditions: ConditionConstraints = _conditions
   def conditions_=(cond: ConditionConstraints): Unit = _conditions = cond
 
-  def failure = _doOnFailure
+  def failure: FailureCondition = _doOnFailure
   def failure_=(cond: FailureCondition): Unit = _doOnFailure = cond
 
   override def toString: String =
@@ -87,12 +92,12 @@ class StateEntity(
     AgentEntity(this, timer)
 
   infix def switch2(nextState: => StateEntity): ConditionConstraints =
-    logger.info(s"Switching from state $name to state ${nextState.name} for the ent ${AgentEntity.getCurrentAgent}")
+    if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Switching from state $name to state ${nextState.name} for the ent ${AgentEntity.getCurrentAgent}")
     AgentEntity(this, nextState)
     new ConditionConstraints(this)
 
   infix def switchOnTimeout(nextState: => StateEntity): FailureCondition =
-    logger.info(s"Switching from state $name to state ${nextState.name} for the ent ${AgentEntity.getCurrentAgent} on timeout only")
+    if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Switching from state $name to state ${nextState.name} for the ent ${AgentEntity.getCurrentAgent} on timeout only")
     AgentEntity(this, nextState)
     val newCond = new ConditionConstraints(this, Int.MinValue)
     conditions = newCond
