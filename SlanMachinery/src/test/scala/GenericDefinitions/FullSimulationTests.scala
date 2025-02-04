@@ -19,8 +19,10 @@ import scala.language.dynamics
 import scala.language.postfixOps
 import Keywords.*
 import org.scalatest.DoNotDiscover
+
 import scala.concurrent.duration.DurationInt
 import PatternMatch4Messages.*
+import Validation.{StateBuildingVisitor, ValidationResult, ValidationState, ValidationVisitor}
 
 
 @DoNotDiscover
@@ -135,6 +137,25 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
     }
 //    logger.info(ModelEntity.toString)
     ModelEntity().map(_.name) shouldBe List("distributedAlternator")
+
+    val st=ValidationState.empty
+
+    val vis = StateBuildingVisitor(st)
+
+    val stNew = ModelEntity().head.accept(vis)
+
+    logger.info(s"stNew = ${stNew.toString}")
+
+    val k =  2+3
+    logger.info(s"k = $k")
+
+    val res = ValidationResult()
+    logger.info(s"res = ${res.toString}")
+    val vis2 = ValidationVisitor(stNew,res)
+    logger.info(s"vis2 = ${vis2.toString}")
+    val res2 = ModelEntity().head.accept(vis2)
+    logger.info(s"res2 = ${res2.toString}")
+
     ModelEntity.resetAll()
   }
 }
