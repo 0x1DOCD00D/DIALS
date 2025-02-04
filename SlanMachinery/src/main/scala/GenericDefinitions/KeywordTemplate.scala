@@ -9,13 +9,16 @@
 package GenericDefinitions
 
 import Utilz.{ConfigDb, CreateLogger}
+import Validation.{Visitor, VisitorState}
 import org.slf4j.Logger
 
 import scala.Dynamic
 import scala.language.dynamics
 import scala.language.postfixOps
 
-trait DialsEntity
+trait DialsEntity {
+  def accept[S <: VisitorState](visitor: Visitor[S]): S = visitor.visit(this)
+}
 
 case object NoEntity extends DialsEntity
 
