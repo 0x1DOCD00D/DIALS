@@ -228,6 +228,7 @@ class AgentEntity(val name: String) extends DialsEntity:
         else s" and periodic behaviors are ${periodicBehaviors.map{case (k, v) => s"${k.name} -> $v"}.mkString("; ")}")
 
   def getStates: List[StateEntity] = states.toList
+  def getTransitions: Map[StateEntity, StateEntity] = stateTransitions.toMap
   def getCurrentState: Option[StateEntity] = currentState
   def checkIfStateExists(se:StateEntity): Boolean = states.toList.exists(s => s.name == se.name)
   def getResources: List[ResourceEntity] = resources.toList

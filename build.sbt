@@ -39,8 +39,8 @@ lazy val apacheCommonMathVersion = "3.6.1"
 val apacheCommonIOVersion = "2.11.0"
 val scalacticVersion = "3.2.9"
 val nscalatimeVersion = "2.30.0"
-val catsVersion = "2.7.0"
-val catsEffectVersion = "3.4-389-3862cf0"
+val catsVersion = "2.12.0"
+val catsEffectVersion = "3.5.2"
 val typesafeScalaLogging = "3.9.4"
 val protobufVersion = "1.0.1"
 val catsScalatestEffects = "1.4.0"
@@ -67,10 +67,10 @@ Test / testGrouping := (Test / definedTests).value map { test =>
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
   "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,
-  Cinnamon.library.cinnamonAkka,
-  Cinnamon.library.cinnamonAkkaTyped,
-  Cinnamon.library.cinnamonPrometheus,
-  Cinnamon.library.cinnamonPrometheusHttpServer,
+//  Cinnamon.library.cinnamonAkka,
+//  Cinnamon.library.cinnamonAkkaTyped,
+//  Cinnamon.library.cinnamonPrometheus,
+//  Cinnamon.library.cinnamonPrometheusHttpServer,
 )
 
 lazy val commonDependencies = Seq(
@@ -84,7 +84,9 @@ lazy val commonDependencies = Seq(
   "commons-io" % "commons-io" % apacheCommonIOVersion,
   "org.apache.commons" % "commons-math3" % apacheCommonMathVersion,
   "org.apache.commons" % "commons-rng-simple" % apacheRngVersion,
-  "org.apache.sshd" % "sshd-core" % apacheSSHVersion
+  "org.apache.sshd" % "sshd-core" % apacheSSHVersion,
+"org.typelevel" %% "cats-core" % catsVersion, // Cats Core library
+"org.typelevel" %% "cats-effect" % catsEffectVersion
 )
 
 

@@ -52,18 +52,28 @@ class StateBuildingVisitor(val state: ValidationState) extends Visitor[Validatio
       state
     } else {
       logger.info(s"Visiting alias: ${alias.alias}")
-      val updatedState = state |+| ValidationState.empty.copy(
-        visitedEntities = state.visitedEntities + aliasHash,
-        aliasNameToHashes = state.aliasNameToHashes.updated(
-          alias.ent.get.asInstanceOf[AgentEntity].name,
-          state.aliasNameToHashes.getOrElse(alias.ent.get.asInstanceOf[AgentEntity].name, Map.empty) +
-            (alias.alias -> (state.aliasNameToHashes
-              .getOrElse(alias.ent.get.asInstanceOf[AgentEntity].name, Map.empty)
-              .getOrElse(alias.alias, Set.empty) + aliasHash))
-        )
+
+      val agentName = alias.ent.get.asInstanceOf[AgentEntity].name
+
+      val updatedAliasMapping: Map[String, Set[String]] =
+        state.nameState.aliasNameToHashes.getOrElse(agentName, Map.empty) + (
+          alias.alias -> (state.nameState.aliasNameToHashes
+            .getOrElse(agentName, Map.empty)
+            .getOrElse(alias.alias, Set.empty) + aliasHash)
+          )
+
+      // Create a new NameState with the updated aliasNameToHashes
+      val updatedNameState = state.nameState.copy(
+        aliasNameToHashes = state.nameState.aliasNameToHashes.updated(agentName, updatedAliasMapping)
       )
 
-      alias.ent.get.accept(StateBuildingVisitor(updatedState)).asInstanceOf[ValidationState]
+      // Merge the changes into the overall ValidationState using the |+| operator
+      val updatedState = state |+| ValidationState.empty.copy(
+        visitedEntities = state.visitedEntities + aliasHash,
+        nameState = updatedNameState
+      )
+
+      alias.ent.get.accept(StateBuildingVisitor(updatedState))
     }
   }
 
@@ -76,12 +86,18 @@ class StateBuildingVisitor(val state: ValidationState) extends Visitor[Validatio
       state
     } else {
       logger.info(s"Visiting agent: ${agent.name}")
-      state |+| ValidationState.empty.copy(
+
+      val updatedState = state |+| ValidationState.empty.copy(
         visitedEntities = state.visitedEntities + agentHash,
-        agentNameToHashes = state.agentNameToHashes.updated(
-          agent.name, state.agentNameToHashes.getOrElse(agent.name, Set.empty) + agentHash
+        nameState = state.nameState.copy(
+          agentNameToHashes = state.nameState.agentNameToHashes.updated(
+            agent.name, state.nameState.agentNameToHashes.getOrElse(agent.name, Set.empty) + agentHash
+          )
         )
       )
+
+      updatedState
+
     }
   }
 
@@ -94,12 +110,15 @@ class StateBuildingVisitor(val state: ValidationState) extends Visitor[Validatio
       state
     } else {
       logger.info(s"Visiting channel: ${channel.name}")
-      state |+| ValidationState.empty.copy(
+      val updatedState = state |+| ValidationState.empty.copy(
         visitedEntities = state.visitedEntities + channelHash,
-        channelNameToHashes = state.channelNameToHashes.updated(
-          channel.name, state.channelNameToHashes.getOrElse(channel.name, Set.empty) + channelHash
+        nameState = state.nameState.copy(
+          channelNameToHashes = state.nameState.channelNameToHashes.updated(
+            channel.name, state.nameState.channelNameToHashes.getOrElse(channel.name, Set.empty) + channelHash
+          )
         )
       )
+      updatedState
     }
   }
 

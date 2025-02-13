@@ -78,7 +78,7 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
       (state randomWait) behaves {
         //when the random wait time is expired the switch occurs
         //if a neighbor contacts you with AskPermission then respond with Goahead
-        case GenericMessageTemplate(_, v, f) =>
+//        TODO: Remove this line
           onEventRule {
             (received AskPermission) -> ((v,f) => (dispatch GoAhead) respond SenderAgent)
           }
@@ -131,7 +131,7 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
       |(agent AlternatorProcess)| := exactly (instance C);
       |(agent AlternatorProcess)| := exactly (instance D);
     } `is defined as` {
-      (agent A) <~> (channel ControlAction) <~> (agent B) <~> (channel ControlAction) <~> (agent C) <~> (channel ControlAction) <~> (agent D) <~> (channel ControlAction) <~> (agent A);
+      (agent A) <~> (channel CA) <~> (agent B) <~> (channel ControlAction) <~> (agent C) <~> (channel ControlAction) <~> (agent D) <~> (channel ControlAction) <~> (agent A);
       (agent A) ~> (channel Data) ~> (agent MessageSinkProcess);
       (agent B) ~> (channel Data) ~> (agent MessageSinkProcess);
       (agent C) ~> (channel Data) ~> (agent MessageSinkProcess);
