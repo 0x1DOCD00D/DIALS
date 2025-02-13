@@ -17,18 +17,28 @@ object AgentValidations {
     }
   }
 
+  private def checkAgentEmpty(agent: AgentEntity, state: ValidationState): ValidationResult = {
+    if (agent.getStates.isEmpty &&
+      agent.getTransitions.isEmpty &&
+      agent.getResources.isEmpty) {
+      ValidationResult.fromError(s"Agent ${agent.name} is empty. Possibly not defined or removed.")
+    } else {
+      ValidationResult.valid
+    }
+  }
+
   private def checkCurrentState(agent: AgentEntity, state: ValidationState): ValidationResult = {
     // Just an example; adjust the message/condition as needed.
     if (agent.getCurrentState.isEmpty) {
       ValidationResult.valid
     } else {
-      ValidationResult.fromWarning("No current state in the agent.")
+      ValidationResult.fromWarning(s"No current state in the agent ${agent.name}")
     }
   }
 
   private def checkDuplicateNames(agent: AgentEntity, state: ValidationState): ValidationResult = {
     val agentName = agent.name
-    if (state.agentNameToHashes(agentName).size > 1) {
+    if (state.nameState.agentNameToHashes(agentName).size > 1) {
       ValidationResult.fromError(s"Duplicate agent name found: $agentName")
     } else {
       ValidationResult.valid
@@ -42,7 +52,8 @@ object AgentValidations {
   private val allValidations: List[AgentValidation] = List(
     checkNameNotEmpty,
     checkCurrentState,
-    checkDuplicateNames
+    checkDuplicateNames,
+    checkAgentEmpty
   )
 
   /**

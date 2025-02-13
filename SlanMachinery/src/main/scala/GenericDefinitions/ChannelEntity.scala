@@ -57,6 +57,12 @@ object ChannelEntity:
 
   def apply(name: String): ChannelEntity =
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"New channel entity $name is created")
-    val newC = new ChannelEntity(name)
-    allChannels.prependAll(List(newC))
-    newC
+    val found = allChannels.find(_.name == name)
+    if found.isDefined then
+      if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Channel entity $name already exists")
+      val chn = found.get
+      chn
+    else
+      val newC = new ChannelEntity(name)
+      allChannels.prependAll(List(newC))
+      newC

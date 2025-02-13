@@ -18,16 +18,16 @@ object ChannelValidations {
 
   private def checkMessagesSize(channel: ChannelEntity, state: ValidationState): ValidationResult = {
     // Just an example; adjust the message/condition as needed.
-    if (channel.messages.isEmpty) {
+    if (channel.messages.nonEmpty) {
       ValidationResult.valid
     } else {
-      ValidationResult.fromError("No messages in the channel.")
+      ValidationResult.fromError(s"No messages in the channel ${channel.name}. Possibly not defined or removed.")
     }
   }
 
   private def checkDuplicateNames(channel: ChannelEntity, state: ValidationState): ValidationResult = {
     val channelName = channel.name
-    if (state.channelNameToHashes(channelName).size > 1) {
+    if (state.nameState.channelNameToHashes(channelName).size > 1) {
       ValidationResult.fromError(s"Duplicate channel name found: $channelName")
     } else {
       ValidationResult.valid

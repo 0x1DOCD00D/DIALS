@@ -10,6 +10,7 @@ case class Error(message: String)   extends ValidationMessage
 case class ValidationResult(
                              errors: List[Error] = Nil,
                              warnings: List[Warning] = Nil,
+//                           ValidatedDataModel
                              visitedEntities: List[String] = Nil
                            ) extends VisitorState {
   def isValid: Boolean = errors.isEmpty

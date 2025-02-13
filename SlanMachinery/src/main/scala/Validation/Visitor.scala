@@ -4,6 +4,7 @@ import GenericDefinitions.{AgentEntity, GroupEntity, ModelEntity, ChannelEntity,
 
 trait VisitorState
 
+// Single visit function for dials entity and pattern matching to specific entity and call function
 
 trait Visitor[S <: VisitorState] {
   def visit(model: ModelEntity): S
