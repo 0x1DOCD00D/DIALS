@@ -109,6 +109,13 @@ object AgentEntity extends EnumeratedNamedEntityInstance:
 
   def getState(name: String): Option[StateEntity] = agents.headOption.flatMap(_.getStates.find(s => s.name == name))
 
+  def getAndSetState(name: String): Option[StateEntity] =
+    val state = getState(name)
+    if state.isDefined then
+      agents.head.currentState = state
+      state
+    else None
+  
   def apply(alias: EntityInstanceAlias): Unit = 
     if enumeratedAliases.toList.exists(e => e._1 == alias.alias) then
       logger.warn(s"Agent alias ${alias.alias}.name}")

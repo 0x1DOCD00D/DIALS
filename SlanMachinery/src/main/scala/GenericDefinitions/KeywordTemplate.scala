@@ -43,7 +43,7 @@ class KeywordTemplate[T <: DialsEntity](classType: Class[T]) extends Dynamic {
     else if classType == classOf[ModelEntity] then ModelEntity(name).asInstanceOf[T]
     else if classType == classOf[FieldEntity] then FieldEntity(name).asInstanceOf[T]
     else if classType == classOf[StateEntity] then
-      if AgentEntity.getState(name).isDefined then AgentEntity.getState(name).get.asInstanceOf[T]
+      if AgentEntity.getState(name).isDefined then AgentEntity.getAndSetState(name).get.asInstanceOf[T]
       else StateEntity(name).asInstanceOf[T]
     else if classType == classOf[BehaviorEntity] then BehaviorEntity(name).asInstanceOf[T]
     else if classType == classOf[DistributionEntity] then DistributionEntity(name).asInstanceOf[T]
