@@ -53,7 +53,6 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
 
       (state Wait4Messages) behaves {
         (action ReceiveMessage) does {
-          case GenericMessageTemplate(_, v, f) =>
             onEventRule {
               (received X) ->
                 {
@@ -78,10 +77,11 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
       (state randomWait) behaves {
         //when the random wait time is expired the switch occurs
         //if a neighbor contacts you with AskPermission then respond with Goahead
-//        TODO: Remove this line
+        (action waiting) does {
           onEventRule {
-            (received AskPermission) -> ((v,f) => (dispatch GoAhead) respond SenderAgent)
+            (received AskPermission) -> ((v, f) => (dispatch GoAhead) respond SenderAgent)
           }
+        }
       } switchOnTimeout (state ContactNeighbors) timeout (resource randomWait).getValues.take(1).toList.head.toInt.seconds;
 
       (state ContactNeighbors) onSwitch {
