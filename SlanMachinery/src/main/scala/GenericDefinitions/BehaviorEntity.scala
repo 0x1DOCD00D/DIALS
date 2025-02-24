@@ -11,7 +11,7 @@ package GenericDefinitions
 import GenericDefinitions.BehaviorEntity.{behaviors, logger}
 import Utilz.Constants.EmptyBehaviorID
 import Utilz.CreateLogger
-
+import Validation.ReflectionLib.IdentInspector.inspect
 import scala.collection.mutable.ListBuffer
 
 case object EmptyBehavior extends BehaviorEntity(EmptyBehaviorID)
@@ -38,10 +38,19 @@ class BehaviorEntity(val name: String, val triggerMsgs: ListBuffer[MessageEntity
       this
     else throw new IllegalStateException(s"Behavior $name's message triggers $msgs cannot be defined within other entity ${GlobalProcessingState.getCurrentProcessingState}")
 
+  infix def newDoesTest(block: => PartialFunction[Any,Unit]):PartialFunction[Any, Unit] =
+    println("Very fast watermelonracer")
+    println(inspect(()=>block))
+    val pf = block
+    this does pf
+
+
   infix def does(defBehavior: PartialFunction[Any, Unit]): PartialFunction[Any, Unit] =
     val nb = new BehaviorEntity(name, ListBuffer(), ListBuffer(defBehavior))
     if GlobalProcessingState.isAgent then
       AgentEntity(nb)
+      logger.info("very unique bananaracer")
+      println(inspect(defBehavior))
       defBehavior
     else if GlobalProcessingState.isNoEntity then
       GlobalProcessingState(nb) match

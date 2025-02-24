@@ -1,12 +1,13 @@
-package Validation
+package Validation.Visitors
 
 import GenericDefinitions.*
 import Utilz.{Constants, CreateLogger}
-
-import Agent.AgentValidations
-import Channel.ChannelValidations
+import Validation.EntityValidation.Agent.AgentValidations
+import Validation.EntityValidation.Channel.ChannelValidations
 import org.slf4j.Logger
 import cats.implicits._
+import Validation.States.ValidationState
+import Validation.Results.ValidationResult
 
 class ValidationVisitor(val state: ValidationState, val result: ValidationResult) extends Visitor[ValidationResult] {
 

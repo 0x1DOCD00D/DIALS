@@ -191,7 +191,8 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
         } orElse (action b3).get
       } switch2 (state st1) when {
         (resource Storage).getValues.toList.head.toInt == 2
-      } orSwitch2 (state st3)
+      } orSwitch2 (state st3) when (1==1) orSwitch2 (state st4) when (1==1);
+
       (state st3) behaves {
         (action b5).get
       } switch2 (state st3) when always timeout 10.seconds

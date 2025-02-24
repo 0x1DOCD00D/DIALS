@@ -1,8 +1,11 @@
-package Validation.Agent
+package Validation.EntityValidation.Agent
 
-import Validation.{ValidationResult, ValidationState}
+import Validation.{Results, States}
 import GenericDefinitions.AgentEntity
-import cats.implicits._  // for combineAll
+import Validation.States.ValidationState
+import Validation.Results.ValidationResult
+import cats.implicits.*
+import Validation.Utils.ExtractUtils.{extractBehaviourMessage, extractMessages, logger}
 
 object AgentValidations {
 
@@ -36,6 +39,36 @@ object AgentValidations {
     }
   }
 
+  private def checkAllMessagesHandled(agent: AgentEntity, state: ValidationState): ValidationResult = {
+    val allIncomingMessages = state.structState.agentIncomingMessages(agent.name)
+
+    val allHandledMessages = agent.getStates.flatMap(
+      state => {
+        val allStateHandles = state.behaviors.flatMap(
+          behavior => {
+            val triggers = behavior.triggerMsgs.map(_.name).toSet
+            val actionMessages = extractBehaviourMessage(behavior, allIncomingMessages)
+            triggers ++ actionMessages
+          }
+        )
+        allStateHandles
+      }
+    )
+
+    logger.info(s"Agent ${agent.name} has handled messages: ${allHandledMessages.mkString(", ")}")
+
+    val unhandledMessages = allIncomingMessages.map(_.name) -- allHandledMessages
+
+    logger.info(s"Agent ${agent.name} has unhandled messages: ${unhandledMessages.mkString(", ")}")
+
+    if (unhandledMessages.isEmpty) {
+      ValidationResult.valid
+    } else {
+      ValidationResult.fromError(s"Agent ${agent.name} has unhandled messages: ${unhandledMessages.mkString(", ")}")
+    }
+
+  }
+
   private def checkDuplicateNames(agent: AgentEntity, state: ValidationState): ValidationResult = {
     val agentName = agent.name
     if (state.nameState.agentNameToHashes(agentName).size > 1) {
@@ -53,7 +86,8 @@ object AgentValidations {
     checkNameNotEmpty,
     checkCurrentState,
     checkDuplicateNames,
-    checkAgentEmpty
+    checkAgentEmpty,
+    checkAllMessagesHandled
   )
 
   /**

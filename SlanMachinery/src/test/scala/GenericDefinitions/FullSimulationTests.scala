@@ -22,8 +22,9 @@ import org.scalatest.DoNotDiscover
 
 import scala.concurrent.duration.DurationInt
 import PatternMatch4Messages.*
-import Validation.{StateBuildingVisitor, ValidationResult, ValidationState, ValidationVisitor}
-
+import Validation.DialsValidator
+import Validation.Results.ValidationResult
+import Validation.States.ValidationState
 
 @DoNotDiscover
 class FullSimulationTests extends AnyFlatSpec with Matchers {
@@ -54,18 +55,11 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
       (state Wait4Messages) behaves {
         (action ReceiveMessage) does {
             onEventRule {
-              (received X) ->
-                {
-                  (v, f) => (resource messageCount) := (resource messageCount).getValues.toList.head.toInt + 1
-                }
-            } orElse onEventRule {
-              (received Y) -> ((v,f) => println("Received message Y."))
-            } orElse onEventRule {
-              (received Z) -> ((v,f) => println("Received message Z."))
-          }
+              (received InformSinkProcess) -> ((v, f) => (resource messageCount) := (resource messageCount).getValues.toList.head.toInt + 1)
+            }
         }
       }
-    } autotrigger (state Wait4Message);
+    } autotrigger (state Wait4Messages);
 
     (agent AlternatorProcess) has {
       (resource responseCount) := 0;
@@ -79,8 +73,16 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
         //if a neighbor contacts you with AskPermission then respond with Goahead
         (action waiting) does {
           onEventRule {
-            (received AskPermission) -> ((v, f) => (dispatch GoAhead) respond SenderAgent)
+            (received AskPermission) -> ((v, f) => (dispatch Goahead) respond SenderAgent)
+          } orElse onEventRule {
+            (received Cake) -> ((v, f) => println("received Cake"))
           }
+        }
+//        error here while this is triggered by a message, its partial function (actual action) is defined for all messages
+        (action chilling) triggeredBy {
+          (Keywords.message Cake)
+        } does {
+          case _ => println("chilling")
         }
       } switchOnTimeout (state ContactNeighbors) timeout (resource randomWait).getValues.take(1).toList.head.toInt.seconds;
 
@@ -98,16 +100,20 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
         //or when the wait time is expired the switch occurs
         //respond to AskPermission with NoWayMyTurn
 
-        (action ReceiveResponse) does {
+        (action ReceiveResponse) newDoesTest {
+//             issue here dispatch response is interpreted as a trigger message
             (resource responses) := (dispatch response)
-            onEventRule {
+
+            onEventRule {(received Cake) -> { (v, f) =>
+            println("received AskPermission")
+          } } orElse onEventRule {
             (received AskPermission) -> { (v,f) =>
               (resource Storage) := v.asInstanceOf
               (dispatch NoWayMyTurn) respond SenderAgent
             }
           } orElse onEventRule {
-            (received GoAhead) -> ((v,f) => (resource responseCount) := (resource responseCount).getValues.toList.take(1).head.toInt + 1)
-          } orElse onEventRule {
+//            (received Goahead) -> ((v,f) => (resource responseCount) := (resource responseCount).getValues.toList.take(1).head.toInt + 1)
+//          } orElse onEventRule {
             (received NoWayMyTurn) -> ((v,f) =>
               val agentID = v.asInstanceOf[List[Double]].head.toInt;
               if (resource ProcessID).getValues.toList.head.toInt > agentID then
@@ -131,7 +137,7 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
       |(agent AlternatorProcess)| := exactly (instance C);
       |(agent AlternatorProcess)| := exactly (instance D);
     } `is defined as` {
-      (agent A) <~> (channel CA) <~> (agent B) <~> (channel ControlAction) <~> (agent C) <~> (channel ControlAction) <~> (agent D) <~> (channel ControlAction) <~> (agent A);
+      (agent A) <~> (channel ControlAction) <~> (agent B) <~> (channel ControlAction) <~> (agent C) <~> (channel ControlAction) <~> (agent D) <~> (channel ControlAction) <~> (agent A);
       (agent A) ~> (channel Data) ~> (agent MessageSinkProcess);
       (agent B) ~> (channel Data) ~> (agent MessageSinkProcess);
       (agent C) ~> (channel Data) ~> (agent MessageSinkProcess);
@@ -142,22 +148,21 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
 
     val st=ValidationState.empty
 
-    val vis = StateBuildingVisitor(st)
+//    val vis = StateBuildingVisitor(st)
+//
+//    val stNew = ModelEntity().head.accept(vis)
 
-    val stNew = ModelEntity().head.accept(vis)
+    val stNew = summon[DialsValidator[DialsEntity]].processIR(ModelEntity().head, st)
 
     logger.info(s"stNew = ${stNew.toString}")
 
-    val k =  2+3
-    logger.info(s"k = $k")
-
     val res = ValidationResult()
-    logger.info(s"res = ${res.toString}")
-    val vis2 = ValidationVisitor(stNew,res)
-    logger.info(s"vis2 = ${vis2.toString}")
-    val res2 = ModelEntity().head.accept(vis2)
+
+    val res2 = summon[DialsValidator[DialsEntity]].validate(ModelEntity().head, stNew, res)
+
     logger.info(s"res2 = ${res2.toString}")
 
     ModelEntity.resetAll()
+
   }
 }

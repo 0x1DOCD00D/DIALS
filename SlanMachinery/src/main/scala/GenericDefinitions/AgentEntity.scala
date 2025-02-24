@@ -12,7 +12,7 @@ import GenericDefinitions.AgentEntity.logger
 import GenericDefinitions.ModelEntity.DIRECTION.*
 import Utilz.Constants.SenderAgentID
 import Utilz.{ConfigDb, CreateLogger}
-
+import Validation.DialsValidator
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.language.dynamics
@@ -213,7 +213,7 @@ object AgentEntity extends EnumeratedNamedEntityInstance:
 
 case object SenderAgent extends AgentEntity(SenderAgentID)
 
-class AgentEntity(val name: String) extends DialsEntity:
+class AgentEntity(val name: String)  extends DialsEntity :
   private val states: ListBuffer[StateEntity] = ListBuffer()
   private val stateTransitions: mutable.Map[StateEntity, StateEntity] = mutable.Map()
   private val periodicBehaviors: mutable.Map[StateEntity, Tuple3[Int,Int,Int]] = mutable.Map()

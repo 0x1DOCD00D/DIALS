@@ -1,7 +1,8 @@
-package Validation
+package Validation.Results
 
 import cats.Monoid
 import cats.implicits._
+import Validation.Visitors.VisitorState
 
 sealed trait ValidationMessage
 case class Warning(message: String) extends ValidationMessage

@@ -15,8 +15,10 @@ import scala.collection.mutable.ListBuffer
 
 class GroupEntity private (name: String, agents: ListBuffer[AgentEntity] = ListBuffer(), resources: ListBuffer[ResourceEntity] = ListBuffer()) extends DialsEntity:
   override def toString: String = s"group $name\n" + agents.mkString("\n") + resources.mkString("\n")
+
+  def getName: String = name
   private def nameIs: String = name
-  
+
   private def addAgent(a: AgentEntity): Unit = agents.appendAll(List(a))
   def removeAgent(a: AgentEntity): Unit = agents.filter(_.name == a.name).foreach(agents -= _)
   
