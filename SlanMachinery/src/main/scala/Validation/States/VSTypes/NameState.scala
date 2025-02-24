@@ -1,9 +1,7 @@
-package Validation
+package Validation.States.VSTypes
 
-import scala.collection.immutable.{Map, Set}
 import cats.Monoid
 import cats.implicits._
-
 
 case class NameState(
                       agentNameToHashes: Map[String, Set[String]] = Map.empty,
@@ -41,28 +39,3 @@ object NameState {
   )
 }
 
-
-
-case class ValidationState(
-                            nameState: NameState = NameState(),
-                            visitedEntities: Set[String] = Set.empty
-                          ) extends VisitorState {
-  override def toString: String =
-    s"ValidationState(\n" +
-      s"  nameState = $nameState,\n" +
-      s"  visitedEntities = $visitedEntities\n" +
-      ")"
-
-}
-
-object ValidationState {
-  val empty: ValidationState = ValidationState()
-
-  implicit val validationStateMonoid: Monoid[ValidationState] = Monoid.instance(
-    empty,
-    (x, y) => ValidationState(
-      x.nameState |+| y.nameState,
-      x.visitedEntities |+| y.visitedEntities
-    )
-  )
-}

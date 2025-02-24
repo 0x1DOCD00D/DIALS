@@ -9,4 +9,5 @@
 package GenericDefinitions
 
 case class EntityInstanceAlias(val alias: String, val ent: Option[DialsEntity] = None) extends DialsEntity:
+  def name: String = alias
   def copy(entity: DialsEntity): EntityInstanceAlias = EntityInstanceAlias(alias, Some(entity))

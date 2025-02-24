@@ -26,6 +26,9 @@ object StateEntity:
 def always: true = true
 
 class ConditionConstraints(stateEntity: StateEntity, howManyMsgs: Int = 1, c: => Boolean = false):
+
+  def getCondition: () => Boolean = () => c
+
   infix def `no condition triggers the switch`(cond: => true): FailureCondition =
     val newCond = new ConditionConstraints(stateEntity, Int.MinValue, c)
     stateEntity.conditions = newCond
@@ -38,7 +41,11 @@ class ConditionConstraints(stateEntity: StateEntity, howManyMsgs: Int = 1, c: =>
     AgentEntity(stateEntity)
     new FailureCondition(stateEntity)
 
+
 class FailureCondition(stateEntity: StateEntity, fs: => Option[StateEntity] = None, d: => Duration = 0.seconds):
+  
+  def getFs: Option[StateEntity] = fs
+  
   infix def timeout(duration: scala.concurrent.duration.Duration): FailureCondition =
     val newFail = new FailureCondition(stateEntity, fs, duration)
     stateEntity.failure = newFail
@@ -58,7 +65,8 @@ class FailureCondition(stateEntity: StateEntity, fs: => Option[StateEntity] = No
 
 class StateEntity(
                    val name: String,
-                   val behaviors: ListBuffer[BehaviorEntity] = ListBuffer()
+                   val behaviors: ListBuffer[BehaviorEntity] = ListBuffer(),
+                   val onSwitchBehavior: () => Unit = () => {},
                  ) extends DialsEntity:
 
   private val logger = CreateLogger(classOf[StateEntity])
@@ -83,7 +91,11 @@ class StateEntity(
 
   infix def onSwitch(onSwitchBehavior: => Unit): StateEntity =
     AgentEntity.getCurrentAgentState match
-      case Some(state) => state
+      case Some(state) =>
+        val nState  = new StateEntity(name, behaviors, () => onSwitchBehavior)
+        AgentEntity(nState)
+        nState
+
       case None =>
         throw new IllegalStateException(s"The ent ${AgentEntity.getCurrentAgent} has no current state - impossible!")
 

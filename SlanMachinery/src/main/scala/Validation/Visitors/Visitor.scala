@@ -1,4 +1,4 @@
-package Validation
+package Validation.Visitors
 
 import GenericDefinitions.{AgentEntity, GroupEntity, ModelEntity, ChannelEntity, DialsEntity}
 

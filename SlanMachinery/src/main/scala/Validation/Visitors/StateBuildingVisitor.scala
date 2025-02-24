@@ -1,9 +1,12 @@
-package Validation
+package Validation.Visitors
 
 import GenericDefinitions._
 import Utilz.{Constants, CreateLogger}
 import cats.implicits._
 import org.slf4j.Logger
+import Validation.States.ValidationState
+import Validation.States.VSTypes.NameState
+import Validation.Visitors.Visitor
 
 class StateBuildingVisitor(val state: ValidationState) extends Visitor[ValidationState] {
 

@@ -9,7 +9,7 @@
 package GenericDefinitions
 
 import Utilz.{ConfigDb, CreateLogger}
-import Validation.{Visitor, VisitorState}
+import Validation.Visitors.{Visitor, VisitorState}
 import org.slf4j.Logger
 
 import scala.Dynamic

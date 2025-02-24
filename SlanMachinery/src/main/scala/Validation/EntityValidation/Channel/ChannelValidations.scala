@@ -1,7 +1,8 @@
-package Validation.Channel
+package Validation.EntityValidation.Channel
 
 import GenericDefinitions.ChannelEntity
-import Validation.{ValidationResult, ValidationState}
+import Validation.Results.ValidationResult
+import Validation.States.ValidationState
 import cats.implicits._
 
 object ChannelValidations {
