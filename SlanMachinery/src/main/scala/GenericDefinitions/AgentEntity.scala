@@ -172,6 +172,9 @@ object AgentEntity extends EnumeratedNamedEntityInstance:
           if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Behavior ${action.name} already exists in the state ${state.name} of the ent ${lst.head.name}")
           b.triggerMsgs.prependAll(action.triggerMsgs)
           b.actualActions.prependAll(action.actualActions)
+          b.actualActionsCode.prependAll(action.actualActionsCode)
+          b.onActiveActions.prependAll(action.onActiveActions)
+          b.onActiveActionsCode.prependAll(action.onActiveActionsCode)
           if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Behavior ${action.name} is updated with ${action.triggerMsgs.toList.length} trigger messages and ${action.actualActions.toList.length} actions")
           if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Behavior ${b.name} contains ${b.triggerMsgs.toList.length} trigger messages and ${b.actualActions.toList.length} actions")
         case None =>

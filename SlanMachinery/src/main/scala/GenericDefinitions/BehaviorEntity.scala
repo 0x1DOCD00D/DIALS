@@ -12,11 +12,13 @@ import GenericDefinitions.BehaviorEntity.{behaviors, logger}
 import Utilz.Constants.EmptyBehaviorID
 import Utilz.CreateLogger
 import Validation.ReflectionLib.IdentInspector.inspect
+import Validation.ReflectionLib.doesInspector.inspectDoesBlock
+
 import scala.collection.mutable.ListBuffer
 
 case object EmptyBehavior extends BehaviorEntity(EmptyBehaviorID)
 
-class BehaviorEntity(val name: String, val triggerMsgs: ListBuffer[MessageEntity] = ListBuffer(), val actualActions: ListBuffer[PartialFunction[Any, Unit]] = ListBuffer()) extends DialsEntity:
+class BehaviorEntity(val name: String, val triggerMsgs: ListBuffer[MessageEntity] = ListBuffer(), val actualActions: ListBuffer[PartialFunction[Any, Unit]] = ListBuffer(), val onActiveActions : ListBuffer[() => Unit] = ListBuffer(),val actualActionsCode: ListBuffer[String] = ListBuffer(), val onActiveActionsCode: ListBuffer[String] = ListBuffer()) extends DialsEntity:
   override def toString: String = s"$name " 
     + (if actualActions.nonEmpty then s"has ${actualActions.toList.length} actions" else "is empty")
     + (if triggerMsgs.nonEmpty then s" and is triggered by ${triggerMsgs.toList.length} messages" else " and it's triggered by all messages")
@@ -38,19 +40,15 @@ class BehaviorEntity(val name: String, val triggerMsgs: ListBuffer[MessageEntity
       this
     else throw new IllegalStateException(s"Behavior $name's message triggers $msgs cannot be defined within other entity ${GlobalProcessingState.getCurrentProcessingState}")
 
-  infix def newDoesTest(block: => PartialFunction[Any,Unit]):PartialFunction[Any, Unit] =
-    println("Very fast watermelonracer")
-    println(inspect(()=>block))
-    val pf = block
-    this does pf
+  inline infix def does(inline block: PartialFunction[Any, Unit]):PartialFunction[Any, Unit] =
+    val res = inspectDoesBlock(block)
+    this doesInternal (res._2().asInstanceOf[PartialFunction[Any, Unit]], res._1, res._3, res._4)
 
 
-  infix def does(defBehavior: PartialFunction[Any, Unit]): PartialFunction[Any, Unit] =
-    val nb = new BehaviorEntity(name, ListBuffer(), ListBuffer(defBehavior))
+  private infix def doesInternal(defBehavior: PartialFunction[Any, Unit], onActiveFunc: () => Unit, onActiveCode: String, actualActionCode: String): PartialFunction[Any, Unit] =
+    val nb = new BehaviorEntity(name, ListBuffer(), ListBuffer(defBehavior), ListBuffer(onActiveFunc), ListBuffer(actualActionCode), ListBuffer(onActiveCode))
     if GlobalProcessingState.isAgent then
       AgentEntity(nb)
-      logger.info("very unique bananaracer")
-      println(inspect(defBehavior))
       defBehavior
     else if GlobalProcessingState.isNoEntity then
       GlobalProcessingState(nb) match
@@ -61,6 +59,9 @@ class BehaviorEntity(val name: String, val triggerMsgs: ListBuffer[MessageEntity
           behaviors.toList.find(_.name == name) match
             case Some(b) =>
               b.actualActions.append(defBehavior)
+              b.onActiveActions.append(onActiveFunc)
+              b.actualActionsCode.append(actualActionCode)
+              b.onActiveActionsCode.append(onActiveCode)
               GlobalProcessingState(NoEntity)
               b.get
             case None =>

@@ -34,7 +34,7 @@ class BehaviorEntityTest extends AnyFlatSpec with Matchers {
       (Keywords.message m4)
       (Keywords.message m5)
     } does {
-      case _ => println("b5 in s2")
+      {case _ => println("b5 in s2")}
       } 
 
     logger.info(BehaviorEntity.toString)
@@ -45,7 +45,7 @@ class BehaviorEntityTest extends AnyFlatSpec with Matchers {
   it should "generate diverse behavior definitions" in {
     (action b1);
     (action b2) does {
-      case _ => println("b2 in s1")
+      {case _ => println("b2 in s1")}
     };
     (action b3) triggeredBy {
       (Keywords.message m1)
@@ -55,7 +55,7 @@ class BehaviorEntityTest extends AnyFlatSpec with Matchers {
       (Keywords.message m4)
       (Keywords.message m5)
     } does {
-      case _ => println("b3 in s1")
+      {case _ => println("b3 in s1")}
     } 
     (action b4) triggeredBy {
       (Keywords.message m1)
@@ -73,7 +73,7 @@ class BehaviorEntityTest extends AnyFlatSpec with Matchers {
       (Keywords.message m4)
       (Keywords.message m5)
     } does {
-      case _ => println("b4 in s1")
+      {case _ => println("b4 in s1")}
     } 
     logger.info(BehaviorEntity.toString)
     BehaviorEntity().length shouldBe 5
