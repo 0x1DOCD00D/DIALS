@@ -23,6 +23,7 @@ import org.scalatest.DoNotDiscover
 import scala.concurrent.duration.DurationInt
 import PatternMatch4Messages.*
 import Validation.DialsValidator
+import Validation.ReflectionLib.IdentInspector.inspect
 import Validation.Results.ValidationResult
 import Validation.States.ValidationState
 
@@ -82,7 +83,7 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
         (action chilling) triggeredBy {
           (Keywords.message Cake)
         } does {
-          case _ => println("chilling")
+          {case _ => println("chilling")}
         }
       } switchOnTimeout (state ContactNeighbors) timeout (resource randomWait).getValues.take(1).toList.head.toInt.seconds;
 
@@ -100,7 +101,7 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
         //or when the wait time is expired the switch occurs
         //respond to AskPermission with NoWayMyTurn
 
-        (action ReceiveResponse) newDoesTest {
+        (action ReceiveResponse) does {
 //             issue here dispatch response is interpreted as a trigger message
             (resource responses) := (dispatch response)
 
@@ -112,8 +113,8 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
               (dispatch NoWayMyTurn) respond SenderAgent
             }
           } orElse onEventRule {
-//            (received Goahead) -> ((v,f) => (resource responseCount) := (resource responseCount).getValues.toList.take(1).head.toInt + 1)
-//          } orElse onEventRule {
+            (received Goahead) -> ((v,f) => (resource responseCount) := (resource responseCount).getValues.toList.take(1).head.toInt + 1)
+          } orElse onEventRule {
             (received NoWayMyTurn) -> ((v,f) =>
               val agentID = v.asInstanceOf[List[Double]].head.toInt;
               if (resource ProcessID).getValues.toList.head.toInt > agentID then
@@ -166,3 +167,8 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
 
   }
 }
+
+
+/*
+
+ */

@@ -17,10 +17,9 @@ object ReflectionLibTest extends App {
     }
 
     println("---- Testing inspectExec ----")
-    println(printAST(sampleFunction())) // Should inspect and execute
+    println(printAST(sampleFunction()))
     println("\n")
-    println(inspect(sampleFunction())) // Should inspect without executing
-
+    println(inspect(sampleFunction()))
   }
 
   // Function to test inspectBlock
@@ -36,7 +35,7 @@ object ReflectionLibTest extends App {
       val ab = (a: Any) => println(a)
       ab
 
-    }) // Should extract statements without executing
+    })
     println("\n")
   }
 
@@ -60,12 +59,12 @@ object ReflectionLibTest extends App {
     var b = 10
     val condition: () => Boolean = () => 5 == 6 && 1 == 2
 
-    println(printAST(condition)) // Should inspect before execution
+    println(inspect(condition))
 
     // Change values and test again
     a = 10
     b = 10
-    printAST(condition) // Should reflect changes
+    println(inspect(condition))
     println("\n")
   }
 

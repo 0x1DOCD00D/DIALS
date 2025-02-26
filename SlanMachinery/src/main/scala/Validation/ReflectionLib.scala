@@ -7,7 +7,7 @@ import scala.quoted.*
 
 object ReflectionLib {
 
-  val logger: Logger = CreateLogger(classOf[String])
+//  val logger: Logger = CreateLogger(classOf[String])
 
   object ASTPrinter {
 
@@ -23,6 +23,47 @@ object ReflectionLib {
 
       // Return the pretty-printed tree as an Expr[String]
       Expr(prettyTree)
+    }
+  }
+
+  object doesInspector {
+
+    inline def inspectDoesBlock[T](inline expr: T): (() => Unit, () => Any, String, String) =
+      ${ inspectDoesImpl('expr) }
+
+    def inspectDoesImpl(expr: Expr[Any])(using Quotes): (Expr[(() => Unit, () => Any, String, String)]) = {
+      import quotes.reflect.*
+
+      val term = expr.asTerm
+      term match {
+        case Inlined(_,List(),Inlined(_,List(),Block(statements,expr))) =>
+          // 1) A Block with statements yields Unit:
+          //      { statements; () }
+          val stmtsBlock = Block(statements, Literal(UnitConstant()))
+
+          // 2) A Block with *no* statements but the same final expression:
+          //      { exprTerm }
+          val exprBlock = Block(Nil, expr)
+
+
+          // Return a tuple where:
+          //  - The first element is a tuple of lambdas
+          //  - The second and third are AST representations
+          '{
+            (
+
+                () => ${stmtsBlock.asExprOf[Unit]},
+                () => ${exprBlock.asExprOf[Any]}
+              , // Executable functions
+              ${Expr(stmtsBlock.show)}, // AST representation of statements
+              ${Expr(exprBlock.show)} // AST representation of final expression
+            )
+          }
+
+        case _ =>
+          report.error("Block expression cannot be processed")
+          '{ throw new Exception("Block expression cannot be processed") }
+      }
     }
   }
 
@@ -52,9 +93,16 @@ object ReflectionLib {
           processTree(sym.tree)
 
         case Block(statements, expr) =>
-          sb.append("Block found:\n")
+          sb.append("Block found:\n" + statements.map(_.show).mkString("\n"))
+          sb.append("\n Block Expression:\n" + expr + '\n' + expr.show)
           statements.foreach(processTree)
           processTree(expr)
+
+        case DefDef(name, _, _, rhs) =>
+          sb.append(s"DefDef: $name\n")
+          sb.append("RHS:\n")
+          sb.append(s"{$rhs}")
+          rhs.foreach(processTree)
 
         case ValDef(name, tpt, rhs) =>
           sb.append(s"ValDef: $name\n")

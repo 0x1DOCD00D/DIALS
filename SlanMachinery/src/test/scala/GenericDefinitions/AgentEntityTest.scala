@@ -31,13 +31,13 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
       (state st1) behaves {
 //        behavior is already a keyword in scalatest so we can use the keyword action, alternatively
         (action b1) does {
-          case _ => ()
+          {case _ => ()}
         };
       } switch2 (state st2);
 
       (state st2) behaves {
         (action b5) does {
-          case _ => ()
+          {case _ => ()}
         };
       } switch2 (state st1)
     }
@@ -49,7 +49,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
     (agent process3) has {
       (state onlyOneState) behaves {
         (action b3) does {
-          case _ => ()
+         { case _ => ()}
         }
       }
     }
@@ -66,7 +66,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
         (resource X).getValues.toList.length > 0 && (resource Y).getValues.toList.head.toInt == 2} timeout 3.second ;
       (state st2) behaves {
         (action b5) does {
-          case _ => println("b5 in s2")
+          {case _ => println("b5 in s2")}
         }
       } switch2 (state st1)
     }
@@ -98,7 +98,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
           (Keywords.message m4)
           (Keywords.message m5)
         } does {
-          case _ => println("b5 in s2")
+          {case _ => println("b5 in s2")}
         }
       } switch2 (state st1)
     }
@@ -119,7 +119,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
           (Keywords.message m4)
           (Keywords.message m5)
         } does {
-          case _ => println("b5 in s2")
+          {case _ => println("b5 in s2")}
         }
       } periodic (1, 2, -1)
     }
@@ -137,8 +137,9 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
           (Keywords.message m4)
           (Keywords.message m5)
         } does {
-          case _ => println("b5 in s2")
-        }
+          {
+            case _ => println("b5 in s2")
+          }        }
       } switch2 (state st1) when always timeout 1.second
     }
 
@@ -156,7 +157,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
 
       (state st2) behaves {
         (action b5) does {
-          case _ => println("b5 in s2")
+          {case _ => println("b5 in s2")}
         }
       } switch2 (state st1)
     } autotrigger (state st1);
@@ -187,7 +188,7 @@ class AgentEntityTest extends AnyFlatSpec with Matchers {
           (dispatch controlMsg)
           (dispatch shutdownMsg)
           } does {
-          case _ => (dispatch infoMsg) send (channel X)
+          {case _ => (dispatch infoMsg) send (channel X)}
         } orElse (action b3).get
       } switch2 (state st1) when {
         (resource Storage).getValues.toList.head.toInt == 2
