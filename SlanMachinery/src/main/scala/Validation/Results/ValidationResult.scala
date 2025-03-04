@@ -29,6 +29,10 @@ object ValidationResult {
 
   def fromError(message: String): ValidationResult = ValidationResult(errors = List(Error(message)))
   def fromWarning(message: String): ValidationResult = ValidationResult(warnings = List(Warning(message)))
+  
+  def fromErrors(messages: List[String]): ValidationResult = ValidationResult(errors = messages.map(Error.apply))
+  
+  def fromWarnings(messages: List[String]): ValidationResult = ValidationResult(warnings = messages.map(Warning.apply))
 
   implicit val validationResultMonoid: Monoid[ValidationResult] = Monoid.instance(
     valid,

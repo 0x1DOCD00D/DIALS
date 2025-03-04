@@ -124,7 +124,7 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
         }
       } switch2 (state Proceed) when {
         (resource responseCount).getValues.toList.head.toInt == (resource numberOfNeighbors).getValues.toList.head.toInt
-      } timeout 3.seconds fail2 (state randomWait);
+      } timeout 3.seconds fail2 (state randomWait) orSwitch2 (state ContactNeighbors) when always
     }
 
     (state Proceed) onSwitch {

@@ -5,7 +5,8 @@ import GenericDefinitions.AgentEntity
 import Validation.States.ValidationState
 import Validation.Results.ValidationResult
 import cats.implicits.*
-import Validation.Utils.ExtractUtils.{extractBehaviourMessage, extractMessages, logger}
+import Validation.Utils.ExtractUtils.{extractBehaviourMessage, logger}
+import Validation.EntityValidation.Agent.StateMachineValidations.stateMachineVals
 
 object AgentValidations {
 
@@ -27,15 +28,6 @@ object AgentValidations {
       ValidationResult.fromError(s"Agent ${agent.name} is empty. Possibly not defined or removed.")
     } else {
       ValidationResult.valid
-    }
-  }
-
-  private def checkCurrentState(agent: AgentEntity, state: ValidationState): ValidationResult = {
-    // Just an example; adjust the message/condition as needed.
-    if (agent.getCurrentState.isEmpty) {
-      ValidationResult.valid
-    } else {
-      ValidationResult.fromWarning(s"No current state in the agent ${agent.name}")
     }
   }
 
@@ -84,11 +76,10 @@ object AgentValidations {
    */
   private val allValidations: List[AgentValidation] = List(
     checkNameNotEmpty,
-    checkCurrentState,
     checkDuplicateNames,
     checkAgentEmpty,
     checkAllMessagesHandled
-  )
+  ) ++ stateMachineVals
 
   /**
    * Applies all agent validations and accumulates errors/warnings
