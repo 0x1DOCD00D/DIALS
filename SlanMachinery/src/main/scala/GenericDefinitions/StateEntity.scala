@@ -10,10 +10,7 @@ package GenericDefinitions
 
 import GenericDefinitions.cType.conditional
 import Utilz.{ConfigDb, CreateLogger}
-import org.slf4j.Logger
-
 import scala.collection.mutable.ListBuffer
-import scala.compiletime.uninitialized
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
@@ -42,7 +39,7 @@ class ConditionConstraints(stateEntity: StateEntity, nextState: StateEntity, how
     val newCond = new ConditionConstraints(stateEntity,nextState ,Int.MinValue, c)
 //    stateEntity.conditions = newCond
     AgentEntity(stateEntity)
-    AgentEntity(stateEntity, nextState, conditionType(cType.always,() => true, ""))
+    AgentEntity(stateEntity, nextState, conditionType(cType.always,() => true))
     new FailureCondition(stateEntity)
 
   inline infix def when(inline cond: => Boolean): FailureCondition =
@@ -62,7 +59,7 @@ class FailureCondition(stateEntity: StateEntity, fs: => Option[StateEntity] = No
   
   def getFs: Option[StateEntity] = fs
 
-//  TODO: Change logic for handeling this
+//  TODO: Change logic for handling this
   infix def timeout(duration: scala.concurrent.duration.Duration): FailureCondition =
     val newFail = new FailureCondition(stateEntity, fs, duration)
     stateEntity.timeout = duration
@@ -72,7 +69,7 @@ class FailureCondition(stateEntity: StateEntity, fs: => Option[StateEntity] = No
   infix def fail2(failState: => StateEntity): FailureCondition =
     val newFail = new FailureCondition(stateEntity, Some(failState), d)
     AgentEntity(stateEntity)
-    AgentEntity(stateEntity, failState, conditionType(cType.failure,() => true, ""))
+    AgentEntity(stateEntity, failState, conditionType(cType.failure,() => true))
     newFail
 
   infix def orSwitch2(failState: => StateEntity): ConditionConstraints =
@@ -92,8 +89,9 @@ class StateEntity(
   override def toString: String =
     s"StateEntity($name, ${behaviors.map(_.toString).mkString})"
 
-  def timeout: Option[scala.concurrent.duration.Duration] = timeout
-  def timeout_= (value: scala.concurrent.duration.Duration): Unit = timeout = value
+  def timeout: Option[scala.concurrent.duration.Duration] = _timeout
+
+  def timeout_=(value: scala.concurrent.duration.Duration): Unit = _timeout = Some(value)
   
   infix def behaves(defBehavior: PartialFunction[Any, Unit]): StateEntity =
     AgentEntity.getCurrentAgentState match
@@ -111,7 +109,7 @@ class StateEntity(
       case None =>
         throw new IllegalStateException(s"The ent ${AgentEntity.getCurrentAgent} has no current state - impossible!")
 
-  infix def periodic(timer: Tuple3[Int, Int, Int]): Unit =
+  infix def periodic(timer: (Int, Int, Int)): Unit =
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Making the state $name periodic behavior for the ent ${AgentEntity.getCurrentAgent}")
     AgentEntity(this, timer)
 

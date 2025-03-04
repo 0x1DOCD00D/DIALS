@@ -34,10 +34,10 @@ class ResourceEntityTest extends AnyFlatSpec with Matchers {
   it should "generate resource definitions" in {
     (resource res1) := (10, 20, 3.14)
     (resource res2) contains {
-      (resource contained1) := (10, 20, 3.14);
+      (resource contained1) := (10, 20, 3.14)
       (resource contained2) contains {
         (resource contained3) := (pdf NormalDistribution) as (10, 20)
-      } := 20;
+      } := 20
     }
     logger.info(ResourceEntity.toString)
     ResourceEntity() shouldBe List("res2", "res1")
@@ -49,17 +49,17 @@ class ResourceEntityTest extends AnyFlatSpec with Matchers {
       (resource res1) := (10, 20, 3.14)
     }
     (resource res2) contains {
-      (resource contained1) := (10, 20, 3.14);
+      (resource contained1) := (10, 20, 3.14)
       (resource contained2) contains {
         (resource contained3) := (pdf NormalDistribution) as (10, 20)
-      } := 20;
+      } := 20
     }
     (agent a2) has {
       (resource res2) contains {
-        (resource contained1) := (10, 20, 3.14);
+        (resource contained1) := (10, 20, 3.14)
         (resource contained2) contains {
           (resource contained3) := (pdf NormalDistribution) as (10, 20)
-        } := 20;
+        } := 20
       }
     }
     logger.info(AgentEntity.toString)

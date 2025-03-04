@@ -54,8 +54,8 @@ class ResourceEntity private (val name: String, val fieldResources: ListBuffer[R
   infix def :=[T <: DistributionEntity | AnyVal | DialsEntity](setV: T*)(using ti: TypeInfo[T]): Unit =
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Setting the value of the resource $name to $setV")
     val (numbers, dialsObjs) = InputDataProcessor(setV*)
-    if !numbers.isEmpty then values = numbers
-    if !dialsObjs.isEmpty then dialsObjects.prependAll(dialsObjs)
+    if numbers.nonEmpty then values = numbers
+    if dialsObjs.nonEmpty then dialsObjects.prependAll(dialsObjs)
     
 
 object ResourceEntity:

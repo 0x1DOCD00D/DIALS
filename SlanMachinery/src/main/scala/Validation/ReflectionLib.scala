@@ -1,8 +1,5 @@
 package Validation
 
-import Utilz.CreateLogger
-import org.slf4j.Logger
-
 import scala.quoted.*
 
 object ReflectionLib {
@@ -29,7 +26,7 @@ object ReflectionLib {
   object extractSource {
     inline def sourceCode[T](inline expr: T): String = ${ sourceCodeImpl('expr) }
 
-    def sourceCodeImpl(expr: Expr[Any])(using Quotes): Expr[String] = {
+    private def sourceCodeImpl(expr: Expr[Any])(using Quotes): Expr[String] = {
       import quotes.reflect.*
 
       val tree = expr.asTerm
@@ -43,7 +40,7 @@ object ReflectionLib {
     inline def inspectDoesBlock[T](inline expr: T): (() => Unit, () => Any, String, String) =
       ${ inspectDoesImpl('expr) }
 
-    def inspectDoesImpl(expr: Expr[Any])(using Quotes): (Expr[(() => Unit, () => Any, String, String)]) = {
+    private def inspectDoesImpl(expr: Expr[Any])(using Quotes): Expr[(() => Unit, () => Any, String, String)] = {
       import quotes.reflect.*
 
       val term = expr.asTerm
@@ -82,7 +79,7 @@ object ReflectionLib {
   object IdentInspector {
     inline def inspect[T](inline expr: T): String = ${ inspectImpl('expr) }
 
-    def inspectImpl(expr: Expr[Any])(using Quotes): Expr[String] = {
+    private def inspectImpl(expr: Expr[Any])(using Quotes): Expr[String] = {
       import quotes.reflect.*
 
       val term = expr.asTerm // Convert expression to AST node
