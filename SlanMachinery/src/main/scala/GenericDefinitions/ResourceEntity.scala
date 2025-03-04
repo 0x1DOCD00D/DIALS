@@ -60,7 +60,7 @@ class ResourceEntity private (val name: String, val fieldResources: ListBuffer[R
 
 object ResourceEntity:
   private val topLevelResources: ListBuffer[ResourceEntity] = ListBuffer()
-  private var containerResourcesStack: mutable.Stack[ResourceEntity] = mutable.Stack[ResourceEntity]()
+  private val containerResourcesStack: mutable.Stack[ResourceEntity] = mutable.Stack[ResourceEntity]()
   private val logger = CreateLogger(classOf[ResourceEntity])
 
   override def toString: String = topLevelResources.map(_.toString).mkString("\n")

@@ -18,6 +18,7 @@ import scala.collection.mutable.ListBuffer
 import scala.language.dynamics
 import scala.language.postfixOps
 
+
 /*
 * An ent represents an FSM that is a relation between states defined by transitions.
 * In turn, each state is linked to specific behaviors that are executed when the ent is in that state.
@@ -142,9 +143,19 @@ object AgentEntity extends EnumeratedNamedEntityInstance:
       if agents.head.stateTransitions(stateEntityFrom) == stateEntity2 then
         logger.warn(s"Transition from state $stateEntityFrom to state $stateEntity2 already exists")
       else
-        agents.head.stateTransitions(stateEntityFrom) = stateEntity2
+        agents.head.stateTransitions(stateEntityFrom)(stateEntity2) = ListBuffer()
     else
-      agents.head.stateTransitions.put(stateEntityFrom, stateEntity2)
+      agents.head.stateTransitions.put(stateEntityFrom, mutable.Map(stateEntity2 -> ListBuffer()))
+      
+  def apply(stateEntityFrom: StateEntity, stateEntity2: StateEntity, condition: conditionType): Unit =
+    if agents.head.stateTransitions.contains(stateEntityFrom) then
+      if agents.head.stateTransitions(stateEntityFrom).contains(stateEntity2) then
+        logger.warn(s"Transition from state $stateEntityFrom to state $stateEntity2 already exists")
+        agents.head.stateTransitions(stateEntityFrom)(stateEntity2).append(condition)
+      else
+        agents.head.stateTransitions(stateEntityFrom)(stateEntity2) = ListBuffer(condition)
+    else
+      agents.head.stateTransitions.put(stateEntityFrom, mutable.Map(stateEntity2 -> ListBuffer(condition))) 
 
   def apply(stateEntity: StateEntity, timer: Tuple3[Int,Int,Int]): Unit =
     if agents.head.periodicBehaviors.contains(stateEntity) then
@@ -216,9 +227,10 @@ object AgentEntity extends EnumeratedNamedEntityInstance:
 
 case object SenderAgent extends AgentEntity(SenderAgentID)
 
+
 class AgentEntity(val name: String)  extends DialsEntity :
   private val states: ListBuffer[StateEntity] = ListBuffer()
-  private val stateTransitions: mutable.Map[StateEntity, StateEntity] = mutable.Map()
+  private val stateTransitions: mutable.Map[StateEntity, mutable.Map[StateEntity, ListBuffer[conditionType]]] = mutable.Map()
   private val periodicBehaviors: mutable.Map[StateEntity, Tuple3[Int,Int,Int]] = mutable.Map()
   private val resources: ListBuffer[ResourceEntity] = ListBuffer()
   private var currentState: Option[StateEntity] = None
@@ -231,14 +243,18 @@ class AgentEntity(val name: String)  extends DialsEntity :
         else s" and resources are ${resources.map(_.name).mkString}")
     +
       ( if stateTransitions.isEmpty then " and no state transitions\n"
-        else s" and state transitions are ${stateTransitions.map{case (k, v) => s"${k.name} -> ${v.name}"}.mkString("; ")}")
+        else s" and state transitions are ${stateTransitions.map{case (k, v) => s"${k.name} -> $v"}.mkString("; ")}")
     +
       (if states.nonEmpty then states.toList.map(s => s"\nstate ${s.name}: " + s.toString()) else "") +
       (if periodicBehaviors.isEmpty then " and no periodic behaviors\n"
         else s" and periodic behaviors are ${periodicBehaviors.map{case (k, v) => s"${k.name} -> $v"}.mkString("; ")}")
 
   def getStates: List[StateEntity] = states.toList
-  def getTransitions: Map[StateEntity, StateEntity] = stateTransitions.toMap
+  def getTransitions: Map[StateEntity, Map[StateEntity, ListBuffer[conditionType]]] =
+    stateTransitions.map { case (fromState, toStateMap) =>
+      fromState -> toStateMap.toMap
+    }.toMap
+
   def getCurrentState: Option[StateEntity] = currentState
   def checkIfStateExists(se:StateEntity): Boolean = states.toList.exists(s => s.name == se.name)
   def getResources: List[ResourceEntity] = resources.toList

@@ -27,6 +27,7 @@ class ResourceEntityTest extends AnyFlatSpec with Matchers {
     (resource pdfres) := (pdf NormalDistribution) as (10, 20)
     logger.info(ResourceEntity.toString)
     ResourceEntity() shouldBe List("pdfres")
+    
     GlobalProcessingState.resetAll()
   }
 

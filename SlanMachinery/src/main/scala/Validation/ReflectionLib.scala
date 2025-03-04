@@ -26,6 +26,18 @@ object ReflectionLib {
     }
   }
 
+  object extractSource {
+    inline def sourceCode[T](inline expr: T): String = ${ sourceCodeImpl('expr) }
+
+    def sourceCodeImpl(expr: Expr[Any])(using Quotes): Expr[String] = {
+      import quotes.reflect.*
+
+      val tree = expr.asTerm
+      val sourceCode = tree.show
+      Expr(sourceCode)
+    }
+  }
+
   object doesInspector {
 
     inline def inspectDoesBlock[T](inline expr: T): (() => Unit, () => Any, String, String) =
