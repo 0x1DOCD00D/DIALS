@@ -116,8 +116,8 @@ object AgentEntity extends EnumeratedNamedEntityInstance:
       agents.head.currentState = state
       state
     else None
-  
-  def apply(alias: EntityInstanceAlias): Unit = 
+
+  def apply(alias: EntityInstanceAlias): Unit =
     if enumeratedAliases.toList.exists(e => e._1 == alias.alias) then
       logger.warn(s"Agent alias ${alias.alias}.name}")
     else if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Creating an ent alias ${alias.alias} for ent ${alias.ent.getOrElse("ent unknown")}")
@@ -146,7 +146,7 @@ object AgentEntity extends EnumeratedNamedEntityInstance:
         agents.head.stateTransitions(stateEntityFrom)(stateEntity2) = ListBuffer()
     else
       agents.head.stateTransitions.put(stateEntityFrom, mutable.Map(stateEntity2 -> ListBuffer()))
-      
+
   def apply(stateEntityFrom: StateEntity, stateEntity2: StateEntity, condition: conditionType): Unit =
     if agents.head.stateTransitions.contains(stateEntityFrom) then
       if agents.head.stateTransitions(stateEntityFrom).contains(stateEntity2) then
@@ -155,7 +155,7 @@ object AgentEntity extends EnumeratedNamedEntityInstance:
       else
         agents.head.stateTransitions(stateEntityFrom)(stateEntity2) = ListBuffer(condition)
     else
-      agents.head.stateTransitions.put(stateEntityFrom, mutable.Map(stateEntity2 -> ListBuffer(condition))) 
+      agents.head.stateTransitions.put(stateEntityFrom, mutable.Map(stateEntity2 -> ListBuffer(condition)))
 
   def apply(stateEntity: StateEntity, timer: Tuple3[Int,Int,Int]): Unit =
     if agents.head.periodicBehaviors.contains(stateEntity) then

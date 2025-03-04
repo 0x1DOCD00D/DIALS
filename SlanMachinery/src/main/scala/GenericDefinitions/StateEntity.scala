@@ -8,7 +8,7 @@
 
 package GenericDefinitions
 
-import GenericDefinitions.cType.conditional
+
 import Utilz.{ConfigDb, CreateLogger}
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration.Duration
