@@ -1,6 +1,6 @@
 package Validation.EntityValidation.Agent
 
-import GenericDefinitions.{AgentEntity, StateEntity, cType}
+import GenericDefinitions.{AgentEntity, StateEntity, ConditionTypeEnum}
 import Validation.EntityValidation.Agent.AgentValidations.AgentValidation
 import Validation.Results.ValidationResult
 import Validation.States.ValidationState
@@ -24,8 +24,8 @@ object StateMachineValidations {
   /** Ensures each state has valid expected event-based transitions */
   private def checkExpectedEvents(agent: AgentEntity, state: ValidationState): ValidationResult = {
     val issues = agent.getTransitions.flatMap { case (state, transitions) =>
-      val conditions = transitions.values.flatten.map(_.cType).toSet
-      if (!conditions.contains(cType.always) && !conditions.contains(cType.conditional))
+      val conditions = transitions.values.flatten.map(_.conditionType).toSet
+      if (!conditions.contains(ConditionTypeEnum.Always) && !conditions.contains(ConditionTypeEnum.Conditional))
         Some(s"State '$state' lacks valid event-based transitions.")
       else None
     }
@@ -41,6 +41,7 @@ object StateMachineValidations {
     def dfs(current: String): Unit = {
       if (!visited.contains(current)) {
         visited.add(current)
+//        TODO: modify these later for debug logs
         println(s"Visiting: $current")
         println(s"Transitions: ${agent.getTransitions.get(current)}")
         agent.getTransitions.get(current).foreach(_.keys.foreach(dfs))
@@ -53,7 +54,7 @@ object StateMachineValidations {
 
     dfs(initialState.name)
     println(s"Visited: $visited")
-
+//    TODO: create methods for strings which are used to create errors and warnings
     val unreachable = agent.getStates.map(_.name).toSet.diff(visited)
     if (unreachable.isEmpty) ValidationResult.valid
     else ValidationResult.fromErrors(unreachable.toList.map(s => s"State '$s' is unreachable."))
@@ -67,11 +68,12 @@ object StateMachineValidations {
       val conditionMap = mutable.Map[String, mutable.ListBuffer[String]]()
 
       for ((nextState, conditions) <- transitions; condition <- conditions) {
-        conditionMap.getOrElseUpdate(condition.cSource, mutable.ListBuffer()).addOne(nextState)
-        if (condition.cType == cType.always) {
+        conditionMap.getOrElseUpdate(condition.cSource.get, mutable.ListBuffer()).addOne(nextState)
+        if (condition.conditionType == ConditionTypeEnum.Always) {
 //         add to all keys
+// TODO: side effects, get to this later to remove side effects
           conditionMap.keys.foreach { key =>
-            if (key != condition.cSource) conditionMap(key).addOne(nextState)
+            if (key != condition.cSource.get) conditionMap(key).addOne(nextState)
           }
         }
       }
@@ -102,7 +104,8 @@ object StateMachineValidations {
       if (!visited.contains(current)) {
         visited += current
         stack += current
-
+        
+//        TODO: has a for each remove while optimising
         agent.getTransitions.get(current).foreach { nextStates =>
           nextStates.keys.foreach { nextState =>
             if (dfs(nextState)) {

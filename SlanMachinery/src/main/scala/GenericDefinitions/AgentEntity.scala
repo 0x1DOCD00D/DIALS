@@ -18,7 +18,6 @@ import scala.collection.mutable.ListBuffer
 import scala.language.dynamics
 import scala.language.postfixOps
 
-
 /*
 * An ent represents an FSM that is a relation between states defined by transitions.
 * In turn, each state is linked to specific behaviors that are executed when the ent is in that state.
@@ -147,7 +146,7 @@ object AgentEntity extends EnumeratedNamedEntityInstance:
     else
       agents.head.stateTransitions.put(stateEntityFrom.name, mutable.Map(stateEntity2.name -> ListBuffer()))
 
-  def apply(stateEntityFrom: StateEntity, stateEntity2: StateEntity, condition: conditionType): Unit =
+  def apply(stateEntityFrom: StateEntity, stateEntity2: StateEntity, condition: ConditionType): Unit =
     if agents.head.stateTransitions.contains(stateEntityFrom.name) then
       if agents.head.stateTransitions(stateEntityFrom.name).contains(stateEntity2.name) then
         logger.warn(s"Transition from state $stateEntityFrom to state $stateEntity2 already exists")
@@ -227,10 +226,11 @@ object AgentEntity extends EnumeratedNamedEntityInstance:
 
 case object SenderAgent extends AgentEntity(SenderAgentID)
 
+type AgentStateMachine = mutable.Map[String, mutable.Map[String, ListBuffer[ConditionType]]]
 
 class AgentEntity(val name: String)  extends DialsEntity :
   private val states: ListBuffer[StateEntity] = ListBuffer()
-  private val stateTransitions: mutable.Map[String, mutable.Map[String, ListBuffer[conditionType]]] = mutable.Map()
+  private val stateTransitions: AgentStateMachine = mutable.Map()
   private val periodicBehaviors: mutable.Map[StateEntity, Tuple3[Int,Int,Int]] = mutable.Map()
   private val resources: ListBuffer[ResourceEntity] = ListBuffer()
   private var currentState: Option[StateEntity] = None
@@ -250,7 +250,7 @@ class AgentEntity(val name: String)  extends DialsEntity :
         else s" and periodic behaviors are ${periodicBehaviors.map{case (k, v) => s"${k.name} -> $v"}.mkString("; ")}")
 
   def getStates: List[StateEntity] = states.toList
-  def getTransitions: Map[String, Map[String, ListBuffer[conditionType]]] =
+  def getTransitions: Map[String, Map[String, ListBuffer[ConditionType]]] =
     stateTransitions.map { case (fromState, toStateMap) =>
       fromState -> toStateMap.toMap
     }.toMap
