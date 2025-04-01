@@ -16,20 +16,10 @@ object StateValidators {
 //      multiple states can be used in different agents so we need to process this multiple times
       val agent = state.smState.agents.head
 //        can utilize this to assign any information to the agent state machine
-
-      if (entity.name == "Wait4ResponsesFromNeighbors"){
-        logger.info(s"Processing the state behaviors ${entity.name}")
-        entity.behaviors.map(
-          b => b.actualActions.map(
-            a => {
-              println(printAST(a("")))
-              println(inspect(a("")))
-            }
-          )
-        )
-      }
       state
 
-    def validate(entity: StateEntity, state: ValidationState, result: ValidationResult): ValidationResult = ???
+    def validate(entity: StateEntity, state: ValidationState, result: ValidationResult): ValidationResult =
+      logger.info(s"Validating state: ${entity.name}")
+      StateValidations.validate(entity, state) |+| result
 
 }

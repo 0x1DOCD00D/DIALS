@@ -11,6 +11,7 @@ import Validation.EntityValidation.Channel.ChannelValidators.given
 import Validation.EntityValidation.EntityInstance.EntityInstanceValidators.given
 import Validation.EntityValidation.Groups.GroupValidators.given
 import Validation.EntityValidation.State.StateValidators.given
+import Validation.EntityValidation.Resource.ResourceValidators.given
 
 
 // Define the type class for validation
@@ -31,6 +32,7 @@ object DialsValidator {
       case alias: EntityInstanceAlias => summon[DialsValidator[EntityInstanceAlias]].processIR(alias, state)
       case group: GroupEntity         => summon[DialsValidator[GroupEntity]].processIR(group, state)
       case st: StateEntity         => summon[DialsValidator[StateEntity]].processIR(st, state)
+      case resource: ResourceEntity => summon[DialsValidator[ResourceEntity]].processIR(resource, state)
       case _ =>
         logger.error(s"Unknown DialsEntity type: $entity")
         state

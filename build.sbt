@@ -4,7 +4,7 @@ import scala.collection.immutable.Seq
 
 ThisBuild / version := "0.1.0-SNAPSHOT"
 
-ThisBuild / scalaVersion := "3.4.2"
+ThisBuild / scalaVersion := "3.6.3"
 
 lazy val root = (project in file("."))
   .settings(
@@ -47,7 +47,8 @@ val catsScalatestEffects = "1.4.0"
 val apacheSSHVersion = "2.9.3"
 val apacheRngVersion = "1.3"
 val guavaVersion = "33.2.1-jre"
-
+val scalaReflectVersion = "2.13.8"
+val scalaCompilerVersion = "2.13.8"
 
 fork := true
 test / parallelExecution := false
@@ -73,6 +74,8 @@ libraryDependencies ++= Seq(
 //  Cinnamon.library.cinnamonPrometheusHttpServer,
 )
 
+
+
 lazy val commonDependencies = Seq(
   "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
   "org.scalatestplus" %% "mockito-4-2" % scalaMockitoTestVersion % Test,
@@ -86,7 +89,11 @@ lazy val commonDependencies = Seq(
   "org.apache.commons" % "commons-rng-simple" % apacheRngVersion,
   "org.apache.sshd" % "sshd-core" % apacheSSHVersion,
 "org.typelevel" %% "cats-core" % catsVersion, // Cats Core library
-"org.typelevel" %% "cats-effect" % catsEffectVersion
+"org.typelevel" %% "cats-effect" % catsEffectVersion,
+  "org.scala-lang" % "scala-reflect" % scalaReflectVersion,
+  "org.scala-lang" % "scala-compiler" % scalaCompilerVersion,
+  "org.scala-lang" %% "scala3-staging" % "3.6.3",
+  "org.scala-lang" %% "scala3-compiler" % "3.6.3",
 )
 
 

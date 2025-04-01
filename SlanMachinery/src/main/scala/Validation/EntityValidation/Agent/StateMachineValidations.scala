@@ -68,12 +68,14 @@ object StateMachineValidations {
       val conditionMap = mutable.Map[String, mutable.ListBuffer[String]]()
 
       for ((nextState, conditions) <- transitions; condition <- conditions) {
-        conditionMap.getOrElseUpdate(condition.cSource.get, mutable.ListBuffer()).addOne(nextState)
-        if (condition.conditionType == ConditionTypeEnum.Always) {
-//         add to all keys
-// TODO: side effects, get to this later to remove side effects
-          conditionMap.keys.foreach { key =>
-            if (key != condition.cSource.get) conditionMap(key).addOne(nextState)
+        if (condition.cSource.isDefined) {
+          conditionMap.getOrElseUpdate(condition.cSource.get, mutable.ListBuffer()).addOne(nextState)
+          if (condition.conditionType == ConditionTypeEnum.Always) {
+            //         add to all keys
+            // TODO: side effects, get to this later to remove side effects
+            conditionMap.keys.foreach { key =>
+              if (key != condition.cSource.get) conditionMap(key).addOne(nextState)
+            }
           }
         }
       }

@@ -83,7 +83,7 @@ class FailureCondition(stateEntity: StateEntity, fs: => Option[StateEntity] = No
 class StateEntity(
                    val name: String,
                    val behaviors: ListBuffer[BehaviorEntity] = ListBuffer(),
-                   val onSwitchBehavior: () => Unit = () => {},
+                   val onSwitchBehavior: Option[() => Unit] = None,
                  ) extends DialsEntity:
 
   private val logger = CreateLogger(classOf[StateEntity])
@@ -105,7 +105,7 @@ class StateEntity(
   infix def onSwitch(onSwitchBehavior: => Unit): StateEntity =
     AgentEntity.getCurrentAgentState match
       case Some(state) =>
-        val nState  = new StateEntity(name, behaviors, () => onSwitchBehavior)
+        val nState  = new StateEntity(name, behaviors, Some(() => onSwitchBehavior))
         AgentEntity(nState)
         nState
 

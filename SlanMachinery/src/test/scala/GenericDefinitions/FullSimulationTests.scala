@@ -66,13 +66,25 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
       (resource responseCount) := 0;
       (resource sentNotification) := 0;
       (resource numberOfNeighbors) := 2;
-      (resource responses)
-      (resource LinearSequence)
+      (resource responses);
+      (resource LinearSequence);
+      (resource KK) contains {
+        (resource ProcessID) := 1;
+        (resource Storage) := 0;
+      };
+      
+      (resource BB) contains {
+        (resource ProcessID) := 1;
+        (resource Storage) := 0;
+      }
+      (resource KK) := 4;
 
       (state randomWait) behaves {
         //when the random wait time is expired the switch occurs
         //if a neighbor contacts you with AskPermission then respond with Goahead
         (action waiting) does {
+          (resource KKK) := 0
+
           onEventRule {
             (received AskPermission) -> ((v, f) => (dispatch Goahead) respond SenderAgent)
           } orElse onEventRule {
@@ -105,9 +117,8 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
 //             issue here dispatch response is interpreted as a trigger message
             (resource responses) := (dispatch response)
 
-            onEventRule {(received Cake) -> { (v, f) =>
-            println("received AskPermission")
-          } } orElse onEventRule {
+
+            onEventRule {
             (received AskPermission) -> { (v,f) =>
               (resource Storage) := v.asInstanceOf
               (dispatch NoWayMyTurn) respond SenderAgent
@@ -160,8 +171,9 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
     val res = ValidationResult()
 
     val res2 = summon[DialsValidator[DialsEntity]].validate(ModelEntity().head, stNew, res)
-
+    val j = ResourceEntity
     logger.info(s"res2 = ${res2.toString}")
+    val k = ResourceEntity
 
     ModelEntity.resetAll()
 

@@ -21,6 +21,7 @@ object GlobalProcessingState:
   def isBehavior: Boolean = currentProcessingState.isInstanceOf[BehaviorEntity]
   def isNoEntity: Boolean = currentProcessingState == NoEntity
   def getCurrentProcessingState: String = currentProcessingState.getClass.getSimpleName
+  def getCurrentProcessingStateEntity: DialsEntity = currentProcessingState
 
   def resetAll(): Unit = 
     currentProcessingState = NoEntity

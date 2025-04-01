@@ -1,13 +1,13 @@
 package Validation.EntityValidation.Agent
 
 import Validation.{Results, States}
-import GenericDefinitions.AgentEntity
+import GenericDefinitions.{AgentEntity, ResourceEntity}
 import Validation.States.ValidationState
 import Validation.Results.ValidationResult
 import cats.implicits.*
 import Validation.Utils.ExtractUtils.{extractBehaviourMessage, logger}
 import Validation.EntityValidation.Agent.StateMachineValidations.stateMachineVals
-
+import Validation.Utils.ReflectionExtractUtils.checkResourceAccess
 object AgentValidations {
 
   // A type alias: function (AgentEntity, ValidationState) => ValidationResult
@@ -69,6 +69,45 @@ object AgentValidations {
       ValidationResult.valid
     }
   }
+  
+  private def checkDuplicateResources(agent: AgentEntity, state: ValidationState): ValidationResult = {
+    val agentName = agent.name
+    val resourceNametoHash = state.nameState.resourceNameToHashes(agentName)
+//    Hashmap resource name to set of hashes found if anything has more than one hash duplicate is detected
+
+    val duplicates = resourceNametoHash.filter { case (_, hashes) => hashes.size > 1 }
+    if (duplicates.nonEmpty) {
+      ValidationResult.fromError(s"Duplicate resource names found: ${duplicates.keys.mkString(", ")}")
+    } else {
+      ValidationResult.valid
+    }
+  }
+
+  private def checkResourceScopeChecks(agent: AgentEntity, state: ValidationState): ValidationResult = {
+    val resources = agent.getResources ++ ResourceEntity.getTopLevelResources
+    
+    val allFieldResources = resources.flatMap(_.collectAllFieldResources)
+    val allResources = resources ++ allFieldResources
+    val allResourceString = allResources.map(_.name).toSet
+    val allStates = agent.getStates
+//    for each state check all behaviours onActiveAction code and actualAction code
+    val allBehaviors = allStates.flatMap(_.behaviors)
+    val ActiveActionCode = allBehaviors.flatMap(_.onActiveActionsCode )
+    val ActualActionCode = allBehaviors.flatMap(_.actualActionsCode)
+
+    val allCode = ActiveActionCode ++ ActualActionCode
+
+    val allResourceAccesses = allCode.flatMap(code => checkResourceAccess(code))
+
+    val outOfScope = allResourceAccesses.filterNot(resource => allResourceString.contains(resource))
+
+    if (outOfScope.isEmpty) {
+      ValidationResult.valid
+    } else {
+      ValidationResult.fromError(s"Agent ${agent.name} has out-of-scope resource accesses: ${outOfScope.mkString(", ")}")
+    }
+
+  }
 
   /**
    * List of all Agent-level validations
@@ -78,7 +117,9 @@ object AgentValidations {
     checkNameNotEmpty,
     checkDuplicateNames,
     checkAgentEmpty,
-    checkAllMessagesHandled
+    checkAllMessagesHandled,
+    checkResourceScopeChecks,
+    checkDuplicateResources,
   ) ++ stateMachineVals
 
   /**

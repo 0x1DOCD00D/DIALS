@@ -40,8 +40,11 @@ object AgentValidators {
 
 //        proceed to adding the state transitions to the mapping in struct state
 
+        val resourceValidations = agent.getResources.foldLeft(processed) { (accState, resource) =>
+          summon[DialsValidator[DialsEntity]].processIR(resource, accState)
+        }
 
-        processed
+        resourceValidations
       }
     }
 
@@ -51,7 +54,12 @@ object AgentValidators {
       else {
         logger.info(s"Validating agent: ${agent.name}")
         val agentResult = AgentValidations.validate(agent, state)
-        result.copy(visitedEntities = result.visitedEntities :+ agentHash) |+| agentResult
+        val validatedAgents = result.copy(visitedEntities = result.visitedEntities :+ agentHash) |+| agentResult
+        val processedStates = agent.getStates.foldLeft(validatedAgents) { (accState, st) =>
+          summon[DialsValidator[DialsEntity]].validate(st, state, validatedAgents)
+        }
+
+        processedStates
       }
     }
 
