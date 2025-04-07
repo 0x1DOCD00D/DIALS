@@ -3,7 +3,7 @@ import GenericDefinitions.ChannelEntity
 import Validation.Results.ValidationResult
 import Validation.States.ValidationState
 import cats.implicits.*
-import Utilz.CreateLogger
+import Utilz.{ConfigDb, CreateLogger}
 import Validation.DialsValidator
 import org.slf4j.Logger
 
@@ -16,7 +16,7 @@ object ChannelValidators {
       val channelHash = channel.hashCode().toString
       if (state.visitedEntities.contains(channelHash)) state
       else {
-        logger.info(s"Processing IR for channel: ${channel.name}")
+        if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Processing IR for channel: ${channel.name}")
         val updatedState = state |+| ValidationState.empty.copy(
           visitedEntities = state.visitedEntities + channelHash,
           nameState = state.nameState.copy(
@@ -33,7 +33,7 @@ object ChannelValidators {
       val channelHash = channel.hashCode().toString
       if (result.visitedEntities.contains(channelHash)) result
       else {
-        logger.info(s"Validating channel: ${channel.name}")
+        if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Validating channel: ${channel.name}")
         val channelResult = ChannelValidations.validate(channel, state)
         result.copy(visitedEntities = result.visitedEntities :+ channelHash) |+| channelResult
       }

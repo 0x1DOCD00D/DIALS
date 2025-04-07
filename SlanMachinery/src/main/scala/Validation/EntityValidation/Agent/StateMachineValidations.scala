@@ -4,7 +4,7 @@ import GenericDefinitions.{AgentEntity, StateEntity, ConditionTypeEnum}
 import Validation.EntityValidation.Agent.AgentValidations.AgentValidation
 import Validation.Results.ValidationResult
 import Validation.States.ValidationState
-
+import AgentValidationMessageTemplates._
 import scala.collection.mutable
 
 object StateMachineValidations {
@@ -14,7 +14,7 @@ object StateMachineValidations {
   private def checkWellDefinedOutgoingTransitions(agent: AgentEntity, state: ValidationState): ValidationResult = {
     val issues = agent.getStates.collect {
       case s if !agent.getTransitions.contains(s.name) =>
-        s"State '${s.name}' has no outgoing transitions, possibly a dead-end state."
+        stateNoOutgoing.format(s.name)
     }
 
     if (issues.isEmpty) ValidationResult.valid
@@ -26,7 +26,7 @@ object StateMachineValidations {
     val issues = agent.getTransitions.flatMap { case (state, transitions) =>
       val conditions = transitions.values.flatten.map(_.conditionType).toSet
       if (!conditions.contains(ConditionTypeEnum.Always) && !conditions.contains(ConditionTypeEnum.Conditional))
-        Some(s"State '$state' lacks valid event-based transitions.")
+        Some(stateMissingEvents.format(state))
       else None
     }
 
@@ -42,8 +42,6 @@ object StateMachineValidations {
       if (!visited.contains(current)) {
         visited.add(current)
 //        TODO: modify these later for debug logs
-        println(s"Visiting: $current")
-        println(s"Transitions: ${agent.getTransitions.get(current)}")
         agent.getTransitions.get(current).foreach(_.keys.foreach(dfs))
       }
     }
@@ -53,11 +51,11 @@ object StateMachineValidations {
 
 
     dfs(initialState.name)
-    println(s"Visited: $visited")
+
 //    TODO: create methods for strings which are used to create errors and warnings
     val unreachable = agent.getStates.map(_.name).toSet.diff(visited)
     if (unreachable.isEmpty) ValidationResult.valid
-    else ValidationResult.fromErrors(unreachable.toList.map(s => s"State '$s' is unreachable."))
+    else ValidationResult.fromErrors(unreachable.toList.map(s => stateUnreachable.format(s)))
   }
 
 
@@ -99,7 +97,7 @@ object StateMachineValidations {
 
     def dfs(current: String): Boolean = {
       if (stack.contains(current)) {
-        issues += s"Cycle detected involving state '$current'."
+        issues += stateCycleDetected.format(current)
         return true
       }
 

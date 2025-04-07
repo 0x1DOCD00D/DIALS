@@ -1,11 +1,11 @@
 package Validation.EntityValidation.EntityInstance
 
-import GenericDefinitions.{EntityInstanceAlias, AgentEntity, DialsEntity}
+import GenericDefinitions.{AgentEntity, DialsEntity, EntityInstanceAlias}
 import Validation.DialsValidator
 import Validation.Results.ValidationResult
 import Validation.States.ValidationState
-import cats.implicits._
-import Utilz.CreateLogger
+import cats.implicits.*
+import Utilz.{ConfigDb, CreateLogger}
 
 
 
@@ -44,7 +44,7 @@ object EntityInstanceValidators {
       val aliasHash = alias.hashCode().toString
       if (result.visitedEntities.contains(aliasHash)) result
       else {
-        logger.info(s"Validating alias: ${alias.alias}")
+        if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Validating alias: ${alias.alias}")
         val updatedRes = result.copy(visitedEntities = result.visitedEntities :+ aliasHash)
         summon[DialsValidator[DialsEntity]].validate(alias.ent.get, state, updatedRes)
       }

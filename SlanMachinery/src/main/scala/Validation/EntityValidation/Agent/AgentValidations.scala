@@ -8,6 +8,9 @@ import cats.implicits.*
 import Validation.Utils.ExtractUtils.{extractBehaviourMessage, logger}
 import Validation.EntityValidation.Agent.StateMachineValidations.stateMachineVals
 import Validation.Utils.ReflectionExtractUtils.checkResourceAccess
+import AgentValidationMessageTemplates.*
+import Utilz.ConfigDb
+
 object AgentValidations {
 
   // A type alias: function (AgentEntity, ValidationState) => ValidationResult
@@ -17,7 +20,7 @@ object AgentValidations {
     if (agent.name.trim.nonEmpty) {
       ValidationResult.valid
     } else {
-      ValidationResult.fromError("Agent name cannot be empty.")
+      ValidationResult.fromError(emptyAgentName)
     }
   }
 
@@ -25,7 +28,7 @@ object AgentValidations {
     if (agent.getStates.isEmpty &&
       agent.getTransitions.isEmpty &&
       agent.getResources.isEmpty) {
-      ValidationResult.fromError(s"Agent ${agent.name} is empty. Possibly not defined or removed.")
+      ValidationResult.fromError(emptyAgent.format(agent.name))
     } else {
       ValidationResult.valid
     }
@@ -47,16 +50,16 @@ object AgentValidations {
       }
     )
 
-    logger.info(s"Agent ${agent.name} has handled messages: ${allHandledMessages.mkString(", ")}")
+    if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Agent ${agent.name} has handled messages: ${allHandledMessages.mkString(", ")}")
 
     val unhandledMessages = allIncomingMessages.map(_.name) -- allHandledMessages
 
-    logger.info(s"Agent ${agent.name} has unhandled messages: ${unhandledMessages.mkString(", ")}")
+    if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Agent ${agent.name} has unhandled messages: ${unhandledMessages.mkString(", ")}")
 
     if (unhandledMessages.isEmpty) {
       ValidationResult.valid
     } else {
-      ValidationResult.fromError(s"Agent ${agent.name} has unhandled messages: ${unhandledMessages.mkString(", ")}")
+      ValidationResult.fromError(unhandledMessagesString.format(agent.name,unhandledMessages.mkString(", ")))
     }
 
   }
@@ -64,7 +67,7 @@ object AgentValidations {
   private def checkDuplicateNames(agent: AgentEntity, state: ValidationState): ValidationResult = {
     val agentName = agent.name
     if (state.nameState.agentNameToHashes(agentName).size > 1) {
-      ValidationResult.fromError(s"Duplicate agent name found: $agentName")
+      ValidationResult.fromError(duplicateAgentName.format(agentName))
     } else {
       ValidationResult.valid
     }
@@ -77,7 +80,7 @@ object AgentValidations {
 
     val duplicates = resourceNametoHash.filter { case (_, hashes) => hashes.size > 1 }
     if (duplicates.nonEmpty) {
-      ValidationResult.fromError(s"Duplicate resource names found: ${duplicates.keys.mkString(", ")}")
+      ValidationResult.fromError(duplicateResourceNames.format(duplicates.keys.mkString(", ")))
     } else {
       ValidationResult.valid
     }
@@ -104,7 +107,7 @@ object AgentValidations {
     if (outOfScope.isEmpty) {
       ValidationResult.valid
     } else {
-      ValidationResult.fromError(s"Agent ${agent.name} has out-of-scope resource accesses: ${outOfScope.mkString(", ")}")
+      ValidationResult.fromError(outOfScopeResources.format(agent.name, outOfScope.mkString(", ")))
     }
 
   }
