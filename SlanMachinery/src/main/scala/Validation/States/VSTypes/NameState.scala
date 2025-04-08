@@ -8,7 +8,7 @@ case class NameState(
                       channelNameToHashes: Map[String, Set[String]] = Map.empty,
                       groupNameToHashes: Map[String, Set[String]] = Map.empty,
                       messageNameToHashes: Map[String, Set[String]] = Map.empty,
-                      resourceNameToHashes: Map[String, Set[String]] = Map.empty,
+                      resourceNameToHashes: Map[String, Map[String, Set[String]]] = Map.empty,
                       aliasNameToHashes: Map[String, Map[String, Set[String]]] = Map.empty,
                     ){
   override def toString: String =

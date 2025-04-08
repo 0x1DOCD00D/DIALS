@@ -9,7 +9,7 @@ import org.slf4j.Logger
 import cats.implicits.*
 import GenericDefinitions.ModelEntity.DIRECTION
 import Validation.States.VSTypes.StructureState
-import Utilz.CreateLogger
+import Utilz.{ConfigDb, CreateLogger}
 
 object ModelValidators {
   private def processConnection(c: Connection, currentState: ValidationState): ValidationState = c match {
@@ -54,7 +54,7 @@ object ModelValidators {
       channelState |+| ValidationState(structState = directionState)
 
     case _ =>
-      logger.error(s"Not a completed chain")
+      if ConfigDb.`DIALS.General.debugMode` then logger.error(s"Not a completed chain")
       currentState
   }
 
@@ -67,7 +67,7 @@ object ModelValidators {
 
 
     case _ =>
-      logger.error(s"Not a completed chain")
+      if ConfigDb.`DIALS.General.debugMode` then logger.error(s"Not a completed chain")
       result
   }
 
@@ -80,7 +80,7 @@ object ModelValidators {
       val modelHash = model.hashCode().toString
       if (state.visitedEntities.contains(modelHash)) state
       else {
-        logger.info(s"Processing IR for model: ${model.name}")
+        if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Processing IR for model: ${model.name}")
         val updatedState = state |+| ValidationState.empty.copy(
           visitedEntities = state.visitedEntities + model.hashCode().toString
         )
@@ -96,7 +96,7 @@ object ModelValidators {
       val modelHash = model.hashCode().toString
       if (result.visitedEntities.contains(modelHash)) result
       else {
-        logger.info(s"Validating model: ${model.name}")
+        if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Validating model: ${model.name}")
         val updatedRes = result.copy(visitedEntities = result.visitedEntities :+ modelHash)
 
         // Process each connection functionally, passing the updated state along

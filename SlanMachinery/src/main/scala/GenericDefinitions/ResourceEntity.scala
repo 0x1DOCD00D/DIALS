@@ -23,6 +23,8 @@ import InputDataProcessor.{TypeInfo, *}
 * If a resource is declared within an ent, which is a top-level entity, then it should be added to the list of resources of the ent.
 * */
 
+// data REC ::= ResourceNil | {value, [REC]}
+
 class ResourceEntity private (val name: String, val fieldResources: ListBuffer[ResourceEntity] = ListBuffer(), var values: LazyList[Double] = LazyList.empty, val dialsObjects: ListBuffer[DialsEntity] = ListBuffer() ) extends DialsEntity:
   private val linearSequence: LazyList[Int] = LazyList.from(1)
   override def toString: String =
@@ -37,8 +39,17 @@ class ResourceEntity private (val name: String, val fieldResources: ListBuffer[R
       logger.error(s"Resource $name has no values")
       LazyList.empty
     else values
+    
+  def collectAllFieldResources: ListBuffer[ResourceEntity] =
+    val allResources = ListBuffer[ResourceEntity]()
+    fieldResources.foreach { resource =>
+      allResources.append(resource)
+      allResources.appendAll(resource.collectAllFieldResources)
+    }
+    allResources
 
   infix def contains[T](resources: => T): ResourceEntity =
+    val curGlobalProcessingState = GlobalProcessingState.getCurrentProcessingStateEntity
     if containerResourcesStack.isEmpty then
       GlobalProcessingState(this) match
         case Left(errMsg) =>
@@ -48,7 +59,7 @@ class ResourceEntity private (val name: String, val fieldResources: ListBuffer[R
     containerResourcesStack.push(this)
     resources
     containerResourcesStack.pop()
-    if containerResourcesStack.isEmpty then GlobalProcessingState(NoEntity)
+    if containerResourcesStack.isEmpty then GlobalProcessingState(curGlobalProcessingState)
     this
 
   infix def :=[T <: DistributionEntity | AnyVal | DialsEntity](setV: T*)(using ti: TypeInfo[T]): Unit =
@@ -62,6 +73,8 @@ object ResourceEntity:
   private val topLevelResources: ListBuffer[ResourceEntity] = ListBuffer()
   private val containerResourcesStack: mutable.Stack[ResourceEntity] = mutable.Stack[ResourceEntity]()
   private val logger = CreateLogger(classOf[ResourceEntity])
+  
+  def getTopLevelResources: ListBuffer[ResourceEntity] = topLevelResources
 
   override def toString: String = topLevelResources.map(_.toString).mkString("\n")
 
@@ -77,23 +90,32 @@ object ResourceEntity:
   def apply(): List[String] = topLevelResources.map(_.name).toList
   def apply(name: String): ResourceEntity =
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Current global processing state is ${GlobalProcessingState.getCurrentProcessingState}")
-    val newRes = new ResourceEntity(name)
-    if GlobalProcessingState.isAgent then
-      if containerResourcesStack.isEmpty then
-        AgentEntity(newRes)
-      else 
-        containerResourcesStack.top.fieldResources += newRes
-        newRes
-    else if GlobalProcessingState.isResource then
-      if containerResourcesStack.nonEmpty then
-        containerResourcesStack.top.fieldResources += newRes
-      newRes
-    else if GlobalProcessingState.isGroup then
-      GroupEntity(newRes)
-      newRes
-    else if GlobalProcessingState.isNoEntity then
-      if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Adding new global resource entity $name to the top level resources")
-      topLevelResources.prependAll(List(newRes))
-      newRes
-    else
-      throw new IllegalStateException(s"Resource $name is not defined within an ent or at the top level with the global state ${GlobalProcessingState.getCurrentProcessingState}")
+    topLevelResources.find(_.name == name) match
+      case Some(existingResource) =>
+        if GlobalProcessingState.isGroup then
+          GroupEntity(existingResource)
+        if GlobalProcessingState.isAgent then
+          AgentEntity(existingResource)
+        existingResource // Return existing resource if found
+      case None =>
+        val newRes = new ResourceEntity(name)
+        if GlobalProcessingState.isAgent then
+            if containerResourcesStack.isEmpty then
+              AgentEntity(newRes)
+            else
+              containerResourcesStack.top.fieldResources += newRes
+              newRes
+        else if GlobalProcessingState.isResource then
+          if containerResourcesStack.nonEmpty then
+            containerResourcesStack.top.fieldResources += newRes
+          newRes
+        else if GlobalProcessingState.isGroup then
+          GroupEntity(newRes)
+          newRes
+        else if GlobalProcessingState.isNoEntity then
+          if ConfigDb.`DIALS.General.debugMode` then
+            logger.info(s"Adding new global resource entity $name to the top level resources")
+          topLevelResources.prepend(newRes)
+          newRes
+        else
+          throw new IllegalStateException(s"Resource $name is not defined within an entity or at the top level with the global state ${GlobalProcessingState.getCurrentProcessingState}")

@@ -1,10 +1,10 @@
 package Validation.EntityValidation.Agent
 
-import GenericDefinitions.{AgentEntity, StateEntity, cType}
+import GenericDefinitions.{AgentEntity, StateEntity, ConditionTypeEnum}
 import Validation.EntityValidation.Agent.AgentValidations.AgentValidation
 import Validation.Results.ValidationResult
 import Validation.States.ValidationState
-
+import AgentValidationMessageTemplates._
 import scala.collection.mutable
 
 object StateMachineValidations {
@@ -14,7 +14,7 @@ object StateMachineValidations {
   private def checkWellDefinedOutgoingTransitions(agent: AgentEntity, state: ValidationState): ValidationResult = {
     val issues = agent.getStates.collect {
       case s if !agent.getTransitions.contains(s.name) =>
-        s"State '${s.name}' has no outgoing transitions, possibly a dead-end state."
+        stateNoOutgoing.format(s.name)
     }
 
     if (issues.isEmpty) ValidationResult.valid
@@ -24,9 +24,9 @@ object StateMachineValidations {
   /** Ensures each state has valid expected event-based transitions */
   private def checkExpectedEvents(agent: AgentEntity, state: ValidationState): ValidationResult = {
     val issues = agent.getTransitions.flatMap { case (state, transitions) =>
-      val conditions = transitions.values.flatten.map(_.cType).toSet
-      if (!conditions.contains(cType.always) && !conditions.contains(cType.conditional))
-        Some(s"State '$state' lacks valid event-based transitions.")
+      val conditions = transitions.values.flatten.map(_.conditionType).toSet
+      if (!conditions.contains(ConditionTypeEnum.Always) && !conditions.contains(ConditionTypeEnum.Conditional))
+        Some(stateMissingEvents.format(state))
       else None
     }
 
@@ -41,8 +41,7 @@ object StateMachineValidations {
     def dfs(current: String): Unit = {
       if (!visited.contains(current)) {
         visited.add(current)
-        println(s"Visiting: $current")
-        println(s"Transitions: ${agent.getTransitions.get(current)}")
+//        TODO: modify these later for debug logs
         agent.getTransitions.get(current).foreach(_.keys.foreach(dfs))
       }
     }
@@ -52,11 +51,11 @@ object StateMachineValidations {
 
 
     dfs(initialState.name)
-    println(s"Visited: $visited")
 
+//    TODO: create methods for strings which are used to create errors and warnings
     val unreachable = agent.getStates.map(_.name).toSet.diff(visited)
     if (unreachable.isEmpty) ValidationResult.valid
-    else ValidationResult.fromErrors(unreachable.toList.map(s => s"State '$s' is unreachable."))
+    else ValidationResult.fromErrors(unreachable.toList.map(s => stateUnreachable.format(s)))
   }
 
 
@@ -67,11 +66,14 @@ object StateMachineValidations {
       val conditionMap = mutable.Map[String, mutable.ListBuffer[String]]()
 
       for ((nextState, conditions) <- transitions; condition <- conditions) {
-        conditionMap.getOrElseUpdate(condition.cSource, mutable.ListBuffer()).addOne(nextState)
-        if (condition.cType == cType.always) {
-//         add to all keys
-          conditionMap.keys.foreach { key =>
-            if (key != condition.cSource) conditionMap(key).addOne(nextState)
+        if (condition.cSource.isDefined) {
+          conditionMap.getOrElseUpdate(condition.cSource.get, mutable.ListBuffer()).addOne(nextState)
+          if (condition.conditionType == ConditionTypeEnum.Always) {
+            //         add to all keys
+            // TODO: side effects, get to this later to remove side effects
+            conditionMap.keys.foreach { key =>
+              if (key != condition.cSource.get) conditionMap(key).addOne(nextState)
+            }
           }
         }
       }
@@ -95,14 +97,15 @@ object StateMachineValidations {
 
     def dfs(current: String): Boolean = {
       if (stack.contains(current)) {
-        issues += s"Cycle detected involving state '$current'."
+        issues += stateCycleDetected.format(current)
         return true
       }
 
       if (!visited.contains(current)) {
         visited += current
         stack += current
-
+        
+//        TODO: has a for each remove while optimising
         agent.getTransitions.get(current).foreach { nextStates =>
           nextStates.keys.foreach { nextState =>
             if (dfs(nextState)) {

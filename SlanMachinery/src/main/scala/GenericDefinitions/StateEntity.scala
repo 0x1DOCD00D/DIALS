@@ -24,12 +24,13 @@ object StateEntity:
 
 def always: true = true
 
-enum cType:
-  case always
-  case conditional
-  case failure
+enum ConditionTypeEnum:
+  case Always
+  case Conditional
+  case Failure
 
-case class conditionType(cType: cType ,c: () => Boolean = () => false, cSource: String = "")
+
+case class ConditionType(conditionType: ConditionTypeEnum ,cond: Option[() => Boolean] = None, cSource: Option[String] = None)
 
 class ConditionConstraints(stateEntity: StateEntity, nextState: StateEntity, howManyMsgs: Int = 1, c: => Boolean = false):
 
@@ -39,7 +40,7 @@ class ConditionConstraints(stateEntity: StateEntity, nextState: StateEntity, how
     val newCond = new ConditionConstraints(stateEntity,nextState ,Int.MinValue, c)
 //    stateEntity.conditions = newCond
     AgentEntity(stateEntity)
-    AgentEntity(stateEntity, nextState, conditionType(cType.always,() => true))
+    AgentEntity(stateEntity, nextState, ConditionType(ConditionTypeEnum.Always,Some(() => true)))
     new FailureCondition(stateEntity)
 
   inline infix def when(inline cond: => Boolean): FailureCondition =
@@ -49,9 +50,10 @@ class ConditionConstraints(stateEntity: StateEntity, nextState: StateEntity, how
     AgentEntity(stateEntity)
 //     inspect cond and see if its always then dont register here
 
-    if source == "GenericDefinitions.StateEntity$package.always" then
-        AgentEntity(stateEntity, nextState, conditionType(cType.always,() => true, source))
-    else AgentEntity(stateEntity, nextState, conditionType(cType.conditional,() => cond, source))
+//  TODO: clone jdk 17 see how they manage errors, strings in properties, use get property
+    if source == sourceCode(always) then
+        AgentEntity(stateEntity, nextState, ConditionType(ConditionTypeEnum.Always,Some(() => true), Some(source)))
+    else AgentEntity(stateEntity, nextState, ConditionType(ConditionTypeEnum.Conditional,Some(() => cond), Some(source)))
     new FailureCondition(stateEntity)
 
 
@@ -69,18 +71,19 @@ class FailureCondition(stateEntity: StateEntity, fs: => Option[StateEntity] = No
   infix def fail2(failState: => StateEntity): FailureCondition =
     val newFail = new FailureCondition(stateEntity, Some(failState), d)
     AgentEntity(stateEntity)
-    AgentEntity(stateEntity, failState, conditionType(cType.failure,() => true))
+    AgentEntity(stateEntity, failState, ConditionType(ConditionTypeEnum.Failure,Some(() => true)))
     newFail
 
   infix def orSwitch2(failState: => StateEntity): ConditionConstraints =
     AgentEntity(stateEntity)
+    AgentEntity(stateEntity, failState)
     new ConditionConstraints(stateEntity, failState)
 
 
 class StateEntity(
                    val name: String,
                    val behaviors: ListBuffer[BehaviorEntity] = ListBuffer(),
-                   val onSwitchBehavior: () => Unit = () => {},
+                   val onSwitchBehavior: Option[() => Unit] = None,
                  ) extends DialsEntity:
 
   private val logger = CreateLogger(classOf[StateEntity])
@@ -102,7 +105,7 @@ class StateEntity(
   infix def onSwitch(onSwitchBehavior: => Unit): StateEntity =
     AgentEntity.getCurrentAgentState match
       case Some(state) =>
-        val nState  = new StateEntity(name, behaviors, () => onSwitchBehavior)
+        val nState  = new StateEntity(name, behaviors, Some(() => onSwitchBehavior))
         AgentEntity(nState)
         nState
 
