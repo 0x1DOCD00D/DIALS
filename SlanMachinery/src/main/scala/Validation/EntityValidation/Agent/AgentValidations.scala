@@ -1,7 +1,7 @@
 package Validation.EntityValidation.Agent
 
 import Validation.{Results, States}
-import GenericDefinitions.{AgentEntity, ResourceEntity}
+import GenericDefinitions.{AgentEntity, ResourceEntity, ProcessingContext}
 import Validation.States.ValidationState
 import Validation.Results.ValidationResult
 import cats.implicits.*
@@ -42,7 +42,7 @@ object AgentValidations {
         val allStateHandles = state.behaviors.flatMap(
           behavior => {
             val triggers = behavior.triggerMsgs.map(_.name).toSet
-            val actionMessages = extractBehaviourMessage(behavior, allIncomingMessages)
+            val actionMessages = extractBehaviourMessage(using ProcessingContext.current)(behavior, allIncomingMessages)
             triggers ++ actionMessages
           }
         )

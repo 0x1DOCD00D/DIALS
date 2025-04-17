@@ -259,7 +259,8 @@ class AgentEntity(val name: String)  extends DialsEntity :
   def checkIfStateExists(se:StateEntity): Boolean = states.toList.exists(s => s.name == se.name)
   def getResources: List[ResourceEntity] = resources.toList
 
-  def getAutoTriggeredState: Option[StateEntity] = AgentEntity.autoTriggered.get(this)
+  def getAutoTriggeredState: Option[StateEntity] = 
+    AgentEntity.autoTriggered.get(this)
 
   infix def autotrigger(state: StateEntity): Unit =
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Setting the state ${state.name} to autotrigger for the ent $name")

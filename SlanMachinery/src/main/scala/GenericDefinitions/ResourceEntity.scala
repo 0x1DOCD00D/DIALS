@@ -15,7 +15,14 @@ import Utilz.{ConfigDb, Constants, CreateLogger}
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import InputDataProcessor.{TypeInfo, *}
+import AkkaMessages.*
+import akka.actor.ActorSystem
+import akka.util.Timeout
+import akka.pattern.ask
+import akka.actor.ActorRef
 
+import scala.concurrent.{ExecutionContext, Future, Await}
+import scala.concurrent.duration.DurationInt
 /*
 * A resource can be defined within an ent or independent of any other entity. A composite resource is a collection of one or more resources.
 * Essentially, a resource is a store for some data and the data can be of any type even though in simulators only numbers or their collections are used.
@@ -34,12 +41,37 @@ class ResourceEntity private (val name: String, val fieldResources: ListBuffer[R
       else s" has fields ${fieldResources.map(_.name)}\n")
 
   def getValues: LazyList[Double] =
+    given Timeout = Timeout(5.seconds)
+
+    if Ctx.flag && Ctx.kind == "Agent" then
+      Ctx.resources.get(name) match
+        case Some(resActor) =>
+          val fut = resActor ? ResourceGetMessage(Ctx.self, name)
+          try
+            Await.result(fut, 5.seconds) match {
+              case ResourceGetResponse(_, _, v: LazyList[?]) =>
+                println(s"[$name] got resource $name: $v")
+                v.asInstanceOf[LazyList[Double]]
+              case other =>
+                logger.error(s"Unexpected response for $name: $other")
+                LazyList.empty
+            }
+          catch
+            case e: Exception =>
+              logger.error(s"Timeout/err fetching $name: ${e.getMessage}")
+              LazyList.empty
+        case None =>
+          logger.error(s"Resource actor for $name not found"); LazyList.empty
+    else
+      fallbackValues
+
+  private def fallbackValues: LazyList[Double] =
+    if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Getting the values of the resource $name (local)")
     if name == Constants.LinearSequence then linearSequence.map(_.toDouble)
     else if values.isEmpty then
       logger.error(s"Resource $name has no values")
       LazyList.empty
     else values
-    
   def collectAllFieldResources: ListBuffer[ResourceEntity] =
     val allResources = ListBuffer[ResourceEntity]()
     fieldResources.foreach { resource =>
@@ -62,12 +94,32 @@ class ResourceEntity private (val name: String, val fieldResources: ListBuffer[R
     if containerResourcesStack.isEmpty then GlobalProcessingState(curGlobalProcessingState)
     this
 
+  infix def set(v: Any): Unit = v match {
+    case value =>
+      value match {
+        case _: AnyVal | _: DialsEntity | _: DistributionEntity =>
+          this.:=(value.asInstanceOf[AnyVal | DialsEntity | DistributionEntity])
+        case _ =>
+          println(s"[ResourceEntity.set] Unsupported value type for resource $name: $value")
+      }
+  }
+
   infix def :=[T <: DistributionEntity | AnyVal | DialsEntity](setV: T*)(using ti: TypeInfo[T]): Unit =
-    if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Setting the value of the resource $name to $setV")
-    val (numbers, dialsObjs) = InputDataProcessor(setV*)
-    if numbers.nonEmpty then values = numbers
-    if dialsObjs.nonEmpty then dialsObjects.prependAll(dialsObjs)
-    
+    if Ctx.flag && Ctx.kind == "Agent" then
+      Ctx.resources.get(name) match
+        case Some(resActor) =>
+          logger.info(s"Setting resource $name to $setV (via actor)")
+          resActor ! ResourceSetMessage(Ctx.self, name, setV)
+        case None =>
+          logger.error(s"Resource actor for $name not found")
+    else
+      // local assignment (model‑build phase or inside ResourceActor itself)
+      if ConfigDb.`DIALS.General.debugMode` then
+        logger.info(s"Setting resource $name locally to $setV")
+      val (nums, objs) = InputDataProcessor(setV*)
+      if nums.nonEmpty  then values       = nums
+      if objs.nonEmpty  then dialsObjects.prependAll(objs)
+
 
 object ResourceEntity:
   private val topLevelResources: ListBuffer[ResourceEntity] = ListBuffer()

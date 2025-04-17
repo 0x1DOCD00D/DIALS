@@ -18,12 +18,12 @@ import scala.collection.mutable.ListBuffer
 
 case object EmptyBehavior extends BehaviorEntity(EmptyBehaviorID)
 
-class BehaviorEntity(val name: String, val triggerMsgs: ListBuffer[MessageEntity] = ListBuffer(), val actualActions: ListBuffer[PartialFunction[Any, Unit]] = ListBuffer(), val onActiveActions : ListBuffer[() => Unit] = ListBuffer(),val actualActionsCode: ListBuffer[String] = ListBuffer(), val onActiveActionsCode: ListBuffer[String] = ListBuffer()) extends DialsEntity:
+class BehaviorEntity(val name: String, val triggerMsgs: ListBuffer[MessageEntity] = ListBuffer(), val actualActions: ListBuffer[ProcessingContext => PartialFunction[Any, Unit]] = ListBuffer(), val onActiveActions : ListBuffer[ProcessingContext => Unit] = ListBuffer(),val actualActionsCode: ListBuffer[String] = ListBuffer(), val onActiveActionsCode: ListBuffer[String] = ListBuffer()) extends DialsEntity:
   override def toString: String = s"$name " 
     + (if actualActions.nonEmpty then s"has ${actualActions.toList.length} actions" else "is empty")
     + (if triggerMsgs.nonEmpty then s" and is triggered by ${triggerMsgs.toList.length} messages" else " and it's triggered by all messages")
   
-  def get: PartialFunction[Any, Unit] = actualActions.foldLeft(PartialFunction.empty)((a, b) => a.orElse(b))
+  def get: PartialFunction[Any, Unit] = actualActions.foldLeft(PartialFunction.empty)((a, b) => a.orElse(b(Ctx.current)))
   
   infix def triggeredBy(msgs: => MessageEntity): BehaviorEntity =
     if GlobalProcessingState.isNoEntity then
@@ -40,36 +40,63 @@ class BehaviorEntity(val name: String, val triggerMsgs: ListBuffer[MessageEntity
       this
     else throw new IllegalStateException(s"Behavior $name's message triggers $msgs cannot be defined within other entity ${GlobalProcessingState.getCurrentProcessingState}")
 
-  inline infix def does(inline block: PartialFunction[Any, Unit]):PartialFunction[Any, Unit] =
-    val res = inspectDoesBlock(block)
-    this doesInternal (res._2().asInstanceOf[PartialFunction[Any, Unit]], res._1, res._3, res._4)
+  // ──────────────────────────────────────────────────────────────
+  // 2.  DSL method  `does`   (now context‑aware)
+  // ──────────────────────────────────────────────────────────────
+  inline infix def does(inline block: PartialFunction[Any, Unit]): PartialFunction[Any, Unit] =
+    val (onActCF, exprCF, onActSrc, actSrc) = inspectDoesBlock(block)
+
+    // wrap exprCF so its result is the PF we need
+    val pfCF: ProcessingContext => PartialFunction[Any, Unit] =
+      (pc: ProcessingContext) =>
+        given ProcessingContext = pc
+        exprCF(pc).asInstanceOf[PartialFunction[Any, Unit]]
+
+    this.doesInternal(pfCF, onActCF, onActSrc, actSrc)
 
 
-  private infix def doesInternal(defBehavior: PartialFunction[Any, Unit], onActiveFunc: () => Unit, onActiveCode: String, actualActionCode: String): PartialFunction[Any, Unit] =
-    val nb = new BehaviorEntity(name, ListBuffer(), ListBuffer(defBehavior), ListBuffer(onActiveFunc), ListBuffer(actualActionCode), ListBuffer(onActiveCode))
+  // ──────────────────────────────────────────────────────────────
+  // 3.  Helper that registers the behaviour without evaluation
+  // ──────────────────────────────────────────────────────────────
+  private infix def doesInternal(
+                                  defBehavior: ProcessingContext => PartialFunction[Any, Unit],
+                                  onActiveFun: ProcessingContext => Unit,
+                                  onActiveSrc: String,
+                                  actionSrc: String
+                                ): PartialFunction[Any, Unit] =
+
+    // create a behaviour entity that stores the *functions* (not evaluated)
+    val nb = new BehaviorEntity(
+      name,
+      ListBuffer(),
+      ListBuffer(defBehavior),
+      ListBuffer(onActiveFun),
+      ListBuffer(actionSrc),
+      ListBuffer(onActiveSrc)
+    )
+
     if GlobalProcessingState.isAgent then
       AgentEntity(nb)
-      defBehavior
     else if GlobalProcessingState.isNoEntity then
       GlobalProcessingState(nb) match
-        case Left(errMsg) =>
-          logger.error(errMsg)
-          throw new IllegalArgumentException(errMsg)
+        case Left(err) => logger.error(err); throw IllegalArgumentException(err)
         case Right(_) =>
-          behaviors.toList.find(_.name == name) match
+          behaviors.find(_.name == name) match
             case Some(b) =>
-              b.actualActions.append(defBehavior)
-              b.onActiveActions.append(onActiveFunc)
-              b.actualActionsCode.append(actualActionCode)
-              b.onActiveActionsCode.append(onActiveCode)
-              GlobalProcessingState(NoEntity)
-              b.get
+              b.actualActions += defBehavior
+              b.onActiveActions += onActiveFun
+              b.actualActionsCode += actionSrc
+              b.onActiveActionsCode += onActiveSrc
             case None =>
-              behaviors.prependAll(List(nb))
-              GlobalProcessingState(NoEntity)
-              defBehavior
-          defBehavior
-    else throw new IllegalStateException(s"Behavior $name cannot be defined within other entity ${GlobalProcessingState.getCurrentProcessingState}")
+              behaviors.prepend(nb)
+          GlobalProcessingState(NoEntity)
+    else
+      throw IllegalStateException(
+        s"Behavior $name cannot be defined inside ${GlobalProcessingState.getCurrentProcessingState}"
+      )
+
+    // return a dummy PF so the DSL call type‑checks; it is never used
+    PartialFunction.empty
 
 object BehaviorEntity:
   private val behaviors: ListBuffer[BehaviorEntity] = ListBuffer()

@@ -33,7 +33,16 @@ lazy val SimulationEngine = (project in file("SimulationEngine"))
 lazy val SlanMachinery = (project in file("SlanMachinery"))
   .settings(
     name := "SlanMachinery",
-    libraryDependencies ++= commonDependencies
+    libraryDependencies ++= commonDependencies ++ Seq(
+      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+      "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
+
+      // Cinnamon (Akka Classic) dependencies — uncomment to enable telemetry
+      //      Cinnamon.library.cinnamonAkka,
+      //      Cinnamon.library.cinnamonAkkaHttp,
+      //      Cinnamon.library.cinnamonPrometheus,
+      //      Cinnamon.library.cinnamonPrometheusHttpServer,
+    )
   ) aggregate GenericSimUtilities dependsOn GenericSimUtilities
 
 lazy val GenericSimUtilities = (project in file("GenericSimUtilities"))

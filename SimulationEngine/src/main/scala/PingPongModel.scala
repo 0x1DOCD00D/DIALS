@@ -8,8 +8,12 @@ import scala.concurrent.duration.DurationInt
 import Validation.DialsValidator
 import Validation.Results.ValidationResult
 import Validation.States.ValidationState
+//import GenericDefinitions.ProcessingContext.given
+
+
 
 object PingPongModel:
+
 
   def buildModel(): (ModelEntity, ValidationResult) = {
     // Define messages
@@ -27,12 +31,14 @@ object PingPongModel:
       (resource pingCount) := 0
 
       (state Start) onSwitch {
+        println("AgentA started")
         (dispatch Ping) send (channel PingPongChannel)
         (resource pingCount) := 1
       } switch2 (state Waiting)
 
       (state Waiting) behaves {
         (action ReceivePong) does {
+          println("AgentA waiting for Pong")
           onEventRule {
             (received Pong) -> { (v, f) =>
               println("AgentA received Pong")
@@ -50,11 +56,20 @@ object PingPongModel:
 
       (state Listen) behaves {
         (action ReceivePing) does {
+          println("AgentB listening for Ping")
+          println(Ctx.toString)
           onEventRule {
+
             (received Ping) -> { (v, f) =>
               println("AgentB received Ping")
+              println(Ctx.toString)
               (dispatch Pong) send (channel PingPongChannel)
-              (resource pongCount) := (resource pongCount).getValues.head.toInt + 1
+              try {
+                (resource pongCount) := (resource pongCount).getValues.head.toInt + 1
+              } catch {
+                case e: Exception =>
+                  (resource pongCount) := 1
+              }
             }
           }
         }

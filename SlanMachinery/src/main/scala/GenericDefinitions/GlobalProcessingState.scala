@@ -31,7 +31,7 @@ object GlobalProcessingState:
     MessageEntity.resetAll()
     ChannelEntity.resetAll()
     BehaviorEntity.resetAll()
-    
+
   def apply(state: DialsEntity): Either[String, DialsEntity] =
     state match
       case a: ModelEntity if currentProcessingState == NoEntity =>

@@ -83,7 +83,7 @@ class FailureCondition(stateEntity: StateEntity, fs: => Option[StateEntity] = No
 class StateEntity(
                    val name: String,
                    val behaviors: ListBuffer[BehaviorEntity] = ListBuffer(),
-                   val onSwitchBehavior: Option[() => Unit] = None,
+                   val onSwitchBehavior: Option[ProcessingContext ?=> Unit] = None,
                  ) extends DialsEntity:
 
   private val logger = CreateLogger(classOf[StateEntity])
@@ -102,15 +102,14 @@ class StateEntity(
       case None =>
         throw new IllegalStateException(s"The ent ${AgentEntity.getCurrentAgent} has no current state - impossible!")
 
-  infix def onSwitch(onSwitchBehavior: => Unit): StateEntity =
+  infix def onSwitch(using ctx: ProcessingContext)(onSwitchBehavior: ProcessingContext ?=> Unit): StateEntity =
     AgentEntity.getCurrentAgentState match
       case Some(state) =>
-        val nState  = new StateEntity(name, behaviors, Some(() => onSwitchBehavior))
-        AgentEntity(nState)
-        nState
-
+        val newState = new StateEntity(name, behaviors, Some(onSwitchBehavior))
+        AgentEntity(newState)
+        newState
       case None =>
-        throw new IllegalStateException(s"The ent ${AgentEntity.getCurrentAgent} has no current state - impossible!")
+        throw new IllegalStateException(s"State '$name' has no agent context")
 
   infix def periodic(timer: (Int, Int, Int)): Unit =
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Making the state $name periodic behavior for the ent ${AgentEntity.getCurrentAgent}")
