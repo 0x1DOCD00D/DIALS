@@ -13,4 +13,7 @@ object AgentValidationMessageTemplates {
   val stateUnreachable = "State '%s' is unreachable."
   val stateConflictingTransitions = "State '%s' has conflicting transitions for condition '%s': %s."
   val stateCycleDetected = "Cycle detected involving state '%s'."
+  val invalidSendChannel = "Invalid send channel or message in agent '%s' for channel -> message pairs ('%s' '%s') ."
+  val invalidChannelComm = "Invalid channel communication in agent '%s' for channel/s '%s'."
+  val invalidMessage = "Invalid message used in agent '%s' for message/s '%s'."
 }

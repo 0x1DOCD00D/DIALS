@@ -6,27 +6,25 @@
  *  See the License for the specific language governing permissions and limitations under the License.
  */
 
-package GenericDefinitions
+package GenericDefinitions.TestingDistributedAlternator
 
+import GenericDefinitions._
+import GenericDefinitions.Keywords._
+import GenericDefinitions.PatternMatch4Messages._
 import Utilz.CreateLogger
+import Validation.DialsValidator
+import Validation.Results.ValidationResult
+import Validation.States.ValidationState
+import org.scalatest.DoNotDiscover
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.slf4j.Logger
 
-import scala.language.dynamics
-import scala.language.postfixOps
-import Keywords.*
-import org.scalatest.DoNotDiscover
-
 import scala.concurrent.duration.DurationInt
-import PatternMatch4Messages.*
-import Validation.DialsValidator
-
-import Validation.Results.ValidationResult
-import Validation.States.ValidationState
+import scala.language.{dynamics, postfixOps}
 
 @DoNotDiscover
-class FullSimulationTests extends AnyFlatSpec with Matchers {
+class FullSimulationTestsOrignal extends AnyFlatSpec with Matchers {
   val logger: Logger = CreateLogger(classOf[FullSimulationTests])
   behavior of "full simulations using DIALS"
 
@@ -74,7 +72,7 @@ class FullSimulationTests extends AnyFlatSpec with Matchers {
         //if a neighbor contacts you with AskPermission then respond with Goahead
         (action Waiting) does {
           onEventRule {
-            (received AskPermission) -> ((v, f) => (dispatch Goahead) respond SenderAgent)
+            (received AskPermission) -> ((v, f) => (dispatch GoAhead) respond SenderAgent)
           }
         }
       } switchOnTimeout (state ContactNeighbors) timeout (resource randomWait).getValues.take(1).toList.head.toInt.seconds

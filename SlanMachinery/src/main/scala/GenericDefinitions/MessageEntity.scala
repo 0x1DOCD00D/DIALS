@@ -89,12 +89,27 @@ object MessageEntity:
 
   def apply(name: String): MessageEntity =
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"New message entity $name is created")
-    val newMsg = new MessageEntity(name)
-    if GlobalProcessingState.isChannel then
-      ChannelEntity(newMsg)
-    if GlobalProcessingState.isAgent then
-      AgentEntity(newMsg)
-    if GlobalProcessingState.isBehavior then
-      BehaviorEntity(newMsg)
-    else allMessages.prependAll(List(newMsg))
-    newMsg
+    if allMessages.exists(_.name == name) then
+      val msg = allMessages.find(_.name == name).get
+      if GlobalProcessingState.isChannel then
+        ChannelEntity(msg)
+      if GlobalProcessingState.isAgent then
+        AgentEntity(msg)
+      if GlobalProcessingState.isBehavior then
+        BehaviorEntity(msg)
+      else 
+//        remove and prepend
+        allMessages -= msg
+        allMessages.prependAll(List(msg))
+      msg
+    else
+      logger.info(s"Creating message entity $name")
+      val newMsg = new MessageEntity(name)
+      if GlobalProcessingState.isChannel then
+        ChannelEntity(newMsg)
+      if GlobalProcessingState.isAgent then
+        AgentEntity(newMsg)
+      if GlobalProcessingState.isBehavior then
+        BehaviorEntity(newMsg)
+      else allMessages.prependAll(List(newMsg))
+      newMsg

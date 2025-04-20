@@ -22,8 +22,15 @@ object ChannelValidators {
           nameState = state.nameState.copy(
             channelNameToHashes = state.nameState.channelNameToHashes.updated(
               channel.name, state.nameState.channelNameToHashes.getOrElse(channel.name, Set.empty) + channelHash
+            ) ,
+            messageNameToHashes = state.nameState.messageNameToHashes ++ channel.messages.map { message =>
+                message._1.name -> (state.nameState.messageNameToHashes.getOrElse(message._1.name, Set.empty) + message._1.hashCode().toString)
+              }.toMap,
+          ),
+            structState = state.structState.copy(
+                channelMessages = state.structState.channelMessages + (channel.name -> channel.messages.map(_._1.name).toSet),
             )
-          )
+          
         )
         updatedState
       }

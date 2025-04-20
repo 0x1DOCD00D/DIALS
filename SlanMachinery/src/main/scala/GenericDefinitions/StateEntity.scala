@@ -16,6 +16,7 @@ import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 import Validation.ReflectionLib.extractSource.sourceCode
 
+
 object StateEntity:
   def apply(name: String): StateEntity =
     val newState = new StateEntity(name)
@@ -84,6 +85,7 @@ class StateEntity(
                    val name: String,
                    val behaviors: ListBuffer[BehaviorEntity] = ListBuffer(),
                    val onSwitchBehavior: Option[ProcessingContext ?=> Unit] = None,
+                   val onSwitchCode: Option[String] = None,
                  ) extends DialsEntity:
 
   private val logger = CreateLogger(classOf[StateEntity])
@@ -102,10 +104,10 @@ class StateEntity(
       case None =>
         throw new IllegalStateException(s"The ent ${AgentEntity.getCurrentAgent} has no current state - impossible!")
 
-  infix def onSwitch(using ctx: ProcessingContext)(onSwitchBehavior: ProcessingContext ?=> Unit): StateEntity =
+  infix inline def onSwitch(using ctx: ProcessingContext)(inline onSwitchBehavior: ProcessingContext ?=> Unit): StateEntity =
     AgentEntity.getCurrentAgentState match
       case Some(state) =>
-        val newState = new StateEntity(name, behaviors, Some(onSwitchBehavior))
+        val newState = new StateEntity(name, behaviors, Some(onSwitchBehavior), Some(sourceCode(onSwitchBehavior)))
         AgentEntity(newState)
         newState
       case None =>

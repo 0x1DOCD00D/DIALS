@@ -7,7 +7,7 @@ import Validation.Results.ValidationResult
 import cats.implicits.*
 import Validation.Utils.ExtractUtils.{extractBehaviourMessage, logger}
 import Validation.EntityValidation.Agent.StateMachineValidations.stateMachineVals
-import Validation.Utils.ReflectionExtractUtils.checkResourceAccess
+import Validation.Utils.ReflectionExtractUtils.{checkResourceAccess,checkChannelAccess,checkMessageAccess, extractSendChannelPairs}
 import AgentValidationMessageTemplates.*
 import Utilz.ConfigDb
 
@@ -97,8 +97,9 @@ object AgentValidations {
     val allBehaviors = allStates.flatMap(_.behaviors)
     val ActiveActionCode = allBehaviors.flatMap(_.onActiveActionsCode )
     val ActualActionCode = allBehaviors.flatMap(_.actualActionsCode)
+    val onSwitchCode = allStates.flatMap(_.onSwitchCode)
 
-    val allCode = ActiveActionCode ++ ActualActionCode
+    val allCode = ActiveActionCode ++ ActualActionCode ++ onSwitchCode
 
     val allResourceAccesses = allCode.flatMap(code => checkResourceAccess(code))
 
@@ -112,6 +113,68 @@ object AgentValidations {
 
   }
 
+  private def checkValidChannelAccess(agent: AgentEntity, state: ValidationState): ValidationResult = {
+    val allStates = agent.getStates
+    val allBehaviors = allStates.flatMap(_.behaviors)
+    val ActiveActionCode = allBehaviors.flatMap(_.onActiveActionsCode )
+    val ActualActionCode = allBehaviors.flatMap(_.actualActionsCode)
+    val onSwitchCode = allStates.flatMap(_.onSwitchCode)
+
+    val allCode = ActiveActionCode ++ ActualActionCode ++ onSwitchCode
+
+    val allChannelAccesses = allCode.flatMap(code => checkChannelAccess(code))
+
+    val undefinedChannels = allChannelAccesses.filterNot(channel => state.nameState.channelNameToHashes.contains(channel))
+
+    if (undefinedChannels.isEmpty) {
+      ValidationResult.valid
+    } else {
+      ValidationResult.fromError(invalidChannelComm.format(agent.name, undefinedChannels.mkString(", ")))
+    }
+  }
+
+  private def checkValidDispatchSend(agent: AgentEntity, state: ValidationState): ValidationResult = {
+    val allStates = agent.getStates
+    val allBehaviors = allStates.flatMap(_.behaviors)
+    val ActiveActionCode = allBehaviors.flatMap(_.onActiveActionsCode )
+    val ActualActionCode = allBehaviors.flatMap(_.actualActionsCode)
+    val onSwitchCode = allStates.flatMap(_.onSwitchCode)
+
+    val allCode = ActiveActionCode ++ ActualActionCode ++ onSwitchCode
+
+    val allMessageChannelPairs= allCode.flatMap(code => extractSendChannelPairs(code))
+//    return message name and channel name
+    val invalidPairs = allMessageChannelPairs.filterNot { case (msg, chan) =>
+      state.structState.channelMessages.get(chan).exists(_.contains(msg))
+    }
+
+    if (invalidPairs.isEmpty) {
+      ValidationResult.valid
+    } else {
+      ValidationResult.fromError(invalidSendChannel.format(agent.name, invalidPairs.map(_._1).mkString(", "), invalidPairs.map(_._2).mkString(", ")))
+    }
+  }
+
+  private def checkValidMessageAccess(agent: AgentEntity, state: ValidationState): ValidationResult = {
+    val allStates = agent.getStates
+    val allBehaviors = allStates.flatMap(_.behaviors)
+    val ActiveActionCode = allBehaviors.flatMap(_.onActiveActionsCode )
+    val ActualActionCode = allBehaviors.flatMap(_.actualActionsCode)
+    val onSwitchCode = allStates.flatMap(_.onSwitchCode)
+
+    val allCode = ActiveActionCode ++ ActualActionCode ++ onSwitchCode
+
+    val allMessageAccesses = allCode.flatMap(code => checkMessageAccess(code))
+
+    val undefinedMessages = allMessageAccesses.filterNot(message => state.nameState.messageNameToHashes.contains(message))
+
+    if (undefinedMessages.isEmpty) {
+      ValidationResult.valid
+    } else {
+      ValidationResult.fromError(invalidMessage.format(agent.name, undefinedMessages.mkString(", ")))
+    }
+  }
+
   /**
    * List of all Agent-level validations
    * (Note: checkCurrentState is currently included twice—remove duplicates if unintended).
@@ -123,6 +186,9 @@ object AgentValidations {
     checkAllMessagesHandled,
     checkResourceScopeChecks,
     checkDuplicateResources,
+    checkValidChannelAccess,
+    checkValidDispatchSend,
+    checkValidMessageAccess,
   ) ++ stateMachineVals
 
   /**
