@@ -1,3 +1,5 @@
+package GenericDefinitions
+
 /*
  * Copyright (c) 7/28/24, 11:16 AM, 28. Mark Grechanik and Lone Star Consulting, Inc. All rights reserved.
  *
@@ -5,8 +7,6 @@
  *
  *  See the License for the specific language governing permissions and limitations under the License.
  */
-
-package GenericDefinitions
 
 import Utilz.CreateLogger
 import org.scalatest.flatspec.AnyFlatSpec
