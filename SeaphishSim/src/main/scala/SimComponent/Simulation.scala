@@ -136,15 +136,13 @@ object Simulation:
 
       for (num <- 0 until (numOfSEAPHISH)) {
         val name = "SEAPHISH" + num.toString
-        |(agent SEAPHISH) | := exactly (EntityInstanceAlias(name))
-
+        |(agent SEAPHISH) | := exactly (instance selectDynamic(name))
       }
 
 
       for (num <- 0 until(numOfAttacker)){
         val name = "MalApp" + num.toString
-        |(agent MaliciousApp) | := exactly (EntityInstanceAlias(name))
-
+        |(agent MaliciousApp) | := exactly (instance selectDynamic(name))
       }
 
       |(agent Simulator)| :=  exactly(instance SimulatorActor)
