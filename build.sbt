@@ -10,10 +10,14 @@ lazy val root = (project in file("."))
   .settings(
     name := "DIALS",
     idePackagePrefix := Some("com.lsc")
-  ).aggregate(GenericSimUtilities, SlanMachinery) enablePlugins Cinnamon dependsOn (GenericSimUtilities, SlanMachinery)
+  ).aggregate(GenericSimUtilities, SlanMachinery,SeaphishSim) enablePlugins Cinnamon dependsOn (GenericSimUtilities, SlanMachinery,SeaphishSim)
 
 Global / excludeLintKeys +=idePackagePrefix
-
+lazy val SeaphishSim = (project in file("SeaphishSim"))
+  .settings(
+    name := "SeaphishSim",
+    libraryDependencies ++= commonDependencies
+  ) aggregate (GenericSimUtilities,SlanMachinery) dependsOn (GenericSimUtilities, SlanMachinery)
 lazy val SlanMachinery = (project in file("SlanMachinery"))
   .settings(
     name := "SlanMachinery",
@@ -25,6 +29,7 @@ lazy val GenericSimUtilities = (project in file("GenericSimUtilities"))
     name := "GenericSimUtilities",
     libraryDependencies ++= commonDependencies
   )
+
 
 resolvers += "Akka library repository".at("https://repo.akka.io/maven")
 resolvers += ("Apache Snapshots" at "http://repository.apache.org/content/repositories/snapshots").withAllowInsecureProtocol(true)
