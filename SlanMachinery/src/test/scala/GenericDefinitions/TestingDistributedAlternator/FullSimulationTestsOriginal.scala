@@ -82,7 +82,7 @@ class FullSimulationTestsOriginal extends AnyFlatSpec with Matchers {
         (state ContactNeighbors) onSwitch {
           //send message AskPermission to your neighbors
           //set the sentNotification resource to true
-          val msgAsk4Permission = (dispatch AskPermission) := (resource ProcessID).getValues.toList.head.toInt
+          val msgAsk4Permission = (dispatch AskPermission2) := (resource ProcessID).getValues.toList.head.toInt
           val sent = msgAsk4Permission send (channel ControlAction)
           (resource sentNotification) := sent.toList.length;
         } switch2 (state Wait4ResponsesFromNeighbors) when (resource sentNotification).getValues.toList.head.toInt == 1
