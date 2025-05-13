@@ -8,14 +8,14 @@
 
 package GenericDefinitions
 
-import Utilz.{ConfigDb, CreateLogger}
-import org.slf4j.Logger
 
+import Utilz.{ConfigDb, CreateLogger}
 import scala.collection.mutable.ListBuffer
-import scala.compiletime.uninitialized
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
+import Validation.ReflectionLib.extractSource.sourceCode
+
 
 object StateEntity:
   def apply(name: String): StateEntity =
@@ -25,63 +25,78 @@ object StateEntity:
 
 def always: true = true
 
-class ConditionConstraints(stateEntity: StateEntity, howManyMsgs: Int = 1, c: => Boolean = false):
+enum ConditionTypeEnum:
+  case Always
+  case Conditional
+  case Failure
+
+
+case class ConditionType(conditionType: ConditionTypeEnum ,cond: Option[() => Boolean] = None, cSource: Option[String] = None)
+
+class ConditionConstraints(stateEntity: StateEntity, nextState: StateEntity, howManyMsgs: Int = 1, c: => Boolean = false):
 
   def getCondition: () => Boolean = () => c
 
   infix def `no condition triggers the switch`(cond: => true): FailureCondition =
-    val newCond = new ConditionConstraints(stateEntity, Int.MinValue, c)
-    stateEntity.conditions = newCond
+    val newCond = new ConditionConstraints(stateEntity,nextState ,Int.MinValue, c)
+//    stateEntity.conditions = newCond
     AgentEntity(stateEntity)
+    AgentEntity(stateEntity, nextState, ConditionType(ConditionTypeEnum.Always,Some(() => true)))
     new FailureCondition(stateEntity)
-    
-  infix def when(cond: => Boolean): FailureCondition =
-    val newCond = new ConditionConstraints(stateEntity, howManyMsgs, cond)
-    stateEntity.conditions = newCond
+
+  inline infix def when(inline cond: => Boolean): FailureCondition =
+    val newCond = new ConditionConstraints(stateEntity, nextState,howManyMsgs, cond)
+//    stateEntity.conditions = newCond
+    val source = sourceCode(cond)
     AgentEntity(stateEntity)
+//     inspect cond and see if its always then dont register here
+
+//  TODO: clone jdk 17 see how they manage errors, strings in properties, use get property
+    if source == sourceCode(always) then
+        AgentEntity(stateEntity, nextState, ConditionType(ConditionTypeEnum.Always,Some(() => true), Some(source)))
+    else AgentEntity(stateEntity, nextState, ConditionType(ConditionTypeEnum.Conditional,Some(() => cond), Some(source)))
     new FailureCondition(stateEntity)
 
 
 class FailureCondition(stateEntity: StateEntity, fs: => Option[StateEntity] = None, d: => Duration = 0.seconds):
   
   def getFs: Option[StateEntity] = fs
-  
+
+//  TODO: Change logic for handling this
   infix def timeout(duration: scala.concurrent.duration.Duration): FailureCondition =
     val newFail = new FailureCondition(stateEntity, fs, duration)
-    stateEntity.failure = newFail
+    stateEntity.timeout = duration
     AgentEntity(stateEntity)
     newFail
 
   infix def fail2(failState: => StateEntity): FailureCondition =
     val newFail = new FailureCondition(stateEntity, Some(failState), d)
-    stateEntity.failure = newFail
     AgentEntity(stateEntity)
+    AgentEntity(stateEntity, failState, ConditionType(ConditionTypeEnum.Failure,Some(() => true)))
     newFail
 
   infix def orSwitch2(failState: => StateEntity): ConditionConstraints =
     AgentEntity(stateEntity)
-    new ConditionConstraints(stateEntity)
+    AgentEntity(stateEntity, failState)
+    new ConditionConstraints(stateEntity, failState)
 
 
 class StateEntity(
                    val name: String,
                    val behaviors: ListBuffer[BehaviorEntity] = ListBuffer(),
-                   val onSwitchBehavior: () => Unit = () => {},
+                   val onSwitchBehavior: Option[ProcessingContext ?=> Unit] = None,
+                   val onSwitchCode: Option[String] = None,
                  ) extends DialsEntity:
 
   private val logger = CreateLogger(classOf[StateEntity])
-  private var _conditions: ConditionConstraints = new ConditionConstraints(this)
-  private var _doOnFailure: FailureCondition = new FailureCondition(this)
-
-  def conditions: ConditionConstraints = _conditions
-  def conditions_=(cond: ConditionConstraints): Unit = _conditions = cond
-
-  def failure: FailureCondition = _doOnFailure
-  def failure_=(cond: FailureCondition): Unit = _doOnFailure = cond
+  private var _timeout: Option[scala.concurrent.duration.Duration] = None
 
   override def toString: String =
-    s"StateEntity($name, ${behaviors.map(_.toString).mkString})" +
-      s" with conditions ${_conditions.toString}"
+    s"StateEntity($name, ${behaviors.map(_.toString).mkString})"
+
+  def timeout: Option[scala.concurrent.duration.Duration] = _timeout
+
+  def timeout_=(value: scala.concurrent.duration.Duration): Unit = _timeout = Some(value)
   
   infix def behaves(defBehavior: PartialFunction[Any, Unit]): StateEntity =
     AgentEntity.getCurrentAgentState match
@@ -89,28 +104,28 @@ class StateEntity(
       case None =>
         throw new IllegalStateException(s"The ent ${AgentEntity.getCurrentAgent} has no current state - impossible!")
 
-  infix def onSwitch(onSwitchBehavior: => Unit): StateEntity =
+  infix inline def onSwitch(using ctx: ProcessingContext)(inline onSwitchBehavior: ProcessingContext ?=> Unit): StateEntity =
     AgentEntity.getCurrentAgentState match
       case Some(state) =>
-        val nState  = new StateEntity(name, behaviors, () => onSwitchBehavior)
-        AgentEntity(nState)
-        nState
-
+        val newState = new StateEntity(name, behaviors, Some(onSwitchBehavior), Some(sourceCode(onSwitchBehavior)))
+        AgentEntity(newState)
+        newState
       case None =>
-        throw new IllegalStateException(s"The ent ${AgentEntity.getCurrentAgent} has no current state - impossible!")
+        throw new IllegalStateException(s"State '$name' has no agent context")
 
-  infix def periodic(timer: Tuple3[Int, Int, Int]): Unit =
+  infix def periodic(timer: (Int, Int, Int)): Unit =
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Making the state $name periodic behavior for the ent ${AgentEntity.getCurrentAgent}")
     AgentEntity(this, timer)
 
   infix def switch2(nextState: => StateEntity): ConditionConstraints =
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Switching from state $name to state ${nextState.name} for the ent ${AgentEntity.getCurrentAgent}")
     AgentEntity(this, nextState)
-    new ConditionConstraints(this)
+    new ConditionConstraints(this, nextState )
 
+//  TODO: manage this
   infix def switchOnTimeout(nextState: => StateEntity): FailureCondition =
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Switching from state $name to state ${nextState.name} for the ent ${AgentEntity.getCurrentAgent} on timeout only")
     AgentEntity(this, nextState)
-    val newCond = new ConditionConstraints(this, Int.MinValue)
-    conditions = newCond
+    val newCond = new ConditionConstraints(this, nextState, Int.MinValue)
+//    conditions = newCond
     new FailureCondition(this)

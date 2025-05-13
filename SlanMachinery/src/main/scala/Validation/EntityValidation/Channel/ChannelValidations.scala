@@ -4,6 +4,7 @@ import GenericDefinitions.ChannelEntity
 import Validation.Results.ValidationResult
 import Validation.States.ValidationState
 import cats.implicits._
+import ChannelValidationMessages._
 
 object ChannelValidations {
   // A type alias: function (ChannelEntity, ValidationState) => ValidationResult
@@ -13,7 +14,7 @@ object ChannelValidations {
     if (channel.name.trim.nonEmpty) {
       ValidationResult.valid
     } else {
-      ValidationResult.fromError("Channel name cannot be empty.")
+      ValidationResult.fromError(emptyName)
     }
   }
 
@@ -22,14 +23,14 @@ object ChannelValidations {
     if (channel.messages.nonEmpty) {
       ValidationResult.valid
     } else {
-      ValidationResult.fromError(s"No messages in the channel ${channel.name}. Possibly not defined or removed.")
+      ValidationResult.fromError(noMessages.format(channel.name))
     }
   }
 
   private def checkDuplicateNames(channel: ChannelEntity, state: ValidationState): ValidationResult = {
     val channelName = channel.name
     if (state.nameState.channelNameToHashes(channelName).size > 1) {
-      ValidationResult.fromError(s"Duplicate channel name found: $channelName")
+      ValidationResult.fromError(duplicateName.format(channelName))
     } else {
       ValidationResult.valid
     }

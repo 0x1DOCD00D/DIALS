@@ -1,7 +1,6 @@
 package Validation
 
-import Utilz.CreateLogger
-import org.slf4j.Logger
+import GenericDefinitions.{Ctx, ProcessingContext}
 
 import scala.quoted.*
 
@@ -26,51 +25,64 @@ object ReflectionLib {
     }
   }
 
-  object doesInspector {
+  object extractSource {
+    inline def sourceCode[T](inline expr: T): String = ${ sourceCodeImpl('expr) }
 
-    inline def inspectDoesBlock[T](inline expr: T): (() => Unit, () => Any, String, String) =
-      ${ inspectDoesImpl('expr) }
-
-    def inspectDoesImpl(expr: Expr[Any])(using Quotes): (Expr[(() => Unit, () => Any, String, String)]) = {
+    private def sourceCodeImpl(expr: Expr[Any])(using Quotes): Expr[String] = {
       import quotes.reflect.*
 
-      val term = expr.asTerm
-      term match {
-        case Inlined(_,List(),Inlined(_,List(),Block(statements,expr))) =>
-          // 1) A Block with statements yields Unit:
-          //      { statements; () }
-          val stmtsBlock = Block(statements, Literal(UnitConstant()))
+      val tree = expr.asTerm
+      val sourceCode = tree.show
+      Expr(sourceCode)
+    }
+  }
 
-          // 2) A Block with *no* statements but the same final expression:
-          //      { exprTerm }
-          val exprBlock = Block(Nil, expr)
+  object doesInspector:
 
+    inline def inspectDoesBlock[T](inline expr: T)
+    : (ProcessingContext => Unit, ProcessingContext => Any, String, String) =
+      ${ inspectDoesImpl('expr) }
 
-          // Return a tuple where:
-          //  - The first element is a tuple of lambdas
-          //  - The second and third are AST representations
+    private def inspectDoesImpl(expr: Expr[Any])
+                               (using Quotes)
+    : Expr[(ProcessingContext => Unit,
+      ProcessingContext => Any,
+      String, String)] =
+      import quotes.reflect.*
+
+      expr.asTerm match
+        case Inlined(_, _, Inlined(_, _, Block(stats, last))) =>
+          val stmtsBlock = Block(stats, Literal(UnitConstant()))
+          val exprBlock  = Block(Nil, last)
+
           '{
             (
+              (pc: ProcessingContext) =>                         // <- run‑time arg
+                ProcessingContext.withCtx(pc) {
+                  given ProcessingContext = pc
+                  ${ stmtsBlock.asExprOf[Unit] }                 // user stmts
+                },
 
-                () => ${stmtsBlock.asExprOf[Unit]},
-                () => ${exprBlock.asExprOf[Any]}
-              , // Executable functions
-              ${Expr(stmtsBlock.show)}, // AST representation of statements
-              ${Expr(exprBlock.show)} // AST representation of final expression
+              /* main body: evaluate final expression / PF in same way */
+              (pc: ProcessingContext) =>
+                ProcessingContext.withCtx(pc) {
+                  given ProcessingContext = pc
+                  ${ exprBlock.asExprOf[Any] }                   // user expr
+                },
+
+              ${ Expr(stmtsBlock.show) },
+              ${ Expr(exprBlock.show) }
             )
           }
 
         case _ =>
-          report.error("Block expression cannot be processed")
+          quotes.reflect.report.error("Block expression cannot be processed")
           '{ throw new Exception("Block expression cannot be processed") }
-      }
-    }
-  }
 
   object IdentInspector {
     inline def inspect[T](inline expr: T): String = ${ inspectImpl('expr) }
 
-    def inspectImpl(expr: Expr[Any])(using Quotes): Expr[String] = {
+    private def inspectImpl(expr: Expr[Any])(using Quotes): Expr[String] = {
       import quotes.reflect.*
 
       val term = expr.asTerm // Convert expression to AST node

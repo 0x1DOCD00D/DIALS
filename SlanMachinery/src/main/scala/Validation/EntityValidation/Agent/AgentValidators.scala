@@ -3,7 +3,7 @@ package Validation.EntityValidation.Agent
 import Validation.Results.ValidationResult
 import Validation.States.ValidationState
 import GenericDefinitions.{AgentEntity, DialsEntity, StateEntity}
-import Utilz.CreateLogger
+import Utilz.{ConfigDb, CreateLogger}
 import cats.implicits.*
 import Validation.DialsValidator
 
@@ -15,7 +15,7 @@ object AgentValidators {
       val agentHash = agent.hashCode().toString
       if (state.visitedEntities.contains(agentHash)) state
       else {
-        logger.info(s"Processing IR for agent: ${agent.name}")
+        if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Processing IR for agent: ${agent.name}")
 
         val agentList = agent.name::state.smState.agents
 
@@ -40,8 +40,11 @@ object AgentValidators {
 
 //        proceed to adding the state transitions to the mapping in struct state
 
+        val resourceValidations = agent.getResources.foldLeft(processed) { (accState, resource) =>
+          summon[DialsValidator[DialsEntity]].processIR(resource, accState)
+        }
 
-        processed
+        resourceValidations
       }
     }
 
@@ -49,9 +52,14 @@ object AgentValidators {
       val agentHash = agent.hashCode().toString
       if (result.visitedEntities.contains(agentHash)) result
       else {
-        logger.info(s"Validating agent: ${agent.name}")
+        if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Validating agent: ${agent.name}")
         val agentResult = AgentValidations.validate(agent, state)
-        result.copy(visitedEntities = result.visitedEntities :+ agentHash) |+| agentResult
+        val validatedAgents = result.copy(visitedEntities = result.visitedEntities :+ agentHash) |+| agentResult
+        val processedStates = agent.getStates.foldLeft(validatedAgents) { (accState, st) =>
+          summon[DialsValidator[DialsEntity]].validate(st, state, validatedAgents)
+        }
+
+        processedStates
       }
     }
 
