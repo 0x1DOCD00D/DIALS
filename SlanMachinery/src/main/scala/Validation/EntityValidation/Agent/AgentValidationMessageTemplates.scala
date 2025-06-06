@@ -16,4 +16,5 @@ object AgentValidationMessageTemplates {
   val invalidSendChannel = "Invalid send channel or message in agent '%s' for channel -> message pairs ('%s' '%s') ."
   val invalidChannelComm = "Invalid channel communication in agent '%s' for channel/s '%s'."
   val invalidMessage = "Invalid message used in agent '%s' for message/s '%s'."
+  val receiveWithSend = "Agent '%s' doesnt receive expected messages '%s' (not sent by any other agent)."
 }

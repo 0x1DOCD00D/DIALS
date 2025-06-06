@@ -92,7 +92,7 @@ class AlternatorValidationSpec
   private val expectedStates      = Set("randomWait", "contactNeighbors", "wait4Responses", "proceed")
   private val expectedMsgProtocol = Set("AskPermission", "Goahead", "NoWayMyTurn", "InformSinkProcess")
 
-  "All actors together visit every FSM state" in measure("fsm‑state‑coverage") {
+  "All actors together visit every FSM state" in measure(" ‑state‑coverage") {
     val tap  = TestProbe()
     val sink = system.actorOf(Props(classOf[MessageSinkProcess], Some(tap.ref)))
     val _    = setupRing(system, sink, tap = Some(tap))

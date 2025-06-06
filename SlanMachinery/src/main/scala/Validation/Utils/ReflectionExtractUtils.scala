@@ -112,16 +112,31 @@ object ReflectionExtractUtils:
       loop(tree).toSet
   }
 
+  def extractReceiveCases(source: String): Set[String] = {
+    val tree = tb.parse(source)
+    val results = extractDynamicSelects(tree)
+    val receiveCases = results.filter(_._1.contains("received"))
+    receiveCases.map { case (path, name) => name }.toSet
+  }
+
+
+
 
   def main(args: Array[String]): Unit = {
     val code =
-      """{
-        |  val contextual$1: GenericDefinitions.ProcessingContext = GenericDefinitions.ProcessingContext.defaultCtx
-        |  val msgAsk4Permission: GenericDefinitions.MessageEntity = GenericDefinitions.Keywords.dispatch.selectDynamic("AskPermission").:=[scala.Int](GenericDefinitions.Keywords.resource.selectDynamic("ProcessID").getValues.toList.head.toInt)
-        |  val sent: scala.collection.immutable.Map[GenericDefinitions.MessageEntity, scala.Array[GenericDefinitions.ChannelEntity]] = msgAsk4Permission.send(GenericDefinitions.Keywords.channel.selectDynamic("ControlAction"))
-        |  GenericDefinitions.Keywords.dispatch.selectDynamic("InformSinkProcess").send(GenericDefinitions.Keywords.channel.selectDynamic("Data"))
-        |  GenericDefinitions.Keywords.resource.selectDynamic("sentNotification").:=[scala.Int](sent.toList.length)(GenericDefinitions.InputDataProcessor.given_TypeInfo_T[scala.Int](scala.reflect.ClassTag.apply[scala.Int](classOf[scala.Int])))
-        |}""".stripMargin
+      """GenericDefinitions.PatternMatch4Messages.onEventRule(scala.Predef.ArrowAssoc[java.lang.String](GenericDefinitions.Keywords.received.selectDynamic("AskPermission")).->[scala.Function2[scala.collection.immutable.List[scala.Double], scala.Option[scala.collection.immutable.List[GenericDefinitions.GenericMessageTemplate]], scala.Unit] {
+        |  def apply(values: scala.collection.immutable.List[scala.Double], fields: scala.Option[scala.collection.immutable.List[GenericDefinitions.GenericMessageTemplate]]): scala.Unit
+        |}](((v: scala.collection.immutable.List[scala.Double], f: scala.Option[scala.collection.immutable.List[GenericDefinitions.GenericMessageTemplate]]) => {
+        |  GenericDefinitions.Keywords.dispatch.selectDynamic("NoWayMyTurn").respond(GenericDefinitions.SenderAgent)
+        |  ()
+        |}))).orElse[scala.Any, scala.Unit](GenericDefinitions.PatternMatch4Messages.onEventRule(scala.Predef.ArrowAssoc[java.lang.String](GenericDefinitions.Keywords.received.selectDynamic("Goahead")).->[scala.Function2[scala.collection.immutable.List[scala.Double], scala.Option[scala.collection.immutable.List[GenericDefinitions.GenericMessageTemplate]], scala.Unit] {
+        |  def apply(values: scala.collection.immutable.List[scala.Double], fields: scala.Option[scala.collection.immutable.List[GenericDefinitions.GenericMessageTemplate]]): scala.Unit
+        |}](((`v₂`: scala.collection.immutable.List[scala.Double], `f₂`: scala.Option[scala.collection.immutable.List[GenericDefinitions.GenericMessageTemplate]]) => GenericDefinitions.Keywords.resource.selectDynamic("responseCount").:=[scala.Int](GenericDefinitions.Keywords.resource.selectDynamic("responseCount").getValues.toList.take(1).head.toInt.+(1))(GenericDefinitions.InputDataProcessor.given_TypeInfo_T[scala.Int](scala.reflect.ClassTag.apply[scala.Int](classOf[scala.Int]))))))).orElse[scala.Any, scala.Unit](GenericDefinitions.PatternMatch4Messages.onEventRule(scala.Predef.ArrowAssoc[java.lang.String](GenericDefinitions.Keywords.received.selectDynamic("NoWayMyTurn")).->[scala.Function2[scala.collection.immutable.List[scala.Double], scala.Option[scala.collection.immutable.List[GenericDefinitions.GenericMessageTemplate]], scala.Unit] {
+        |  def apply(values: scala.collection.immutable.List[scala.Double], fields: scala.Option[scala.collection.immutable.List[GenericDefinitions.GenericMessageTemplate]]): scala.Unit
+        |}](((`v₃`: scala.collection.immutable.List[scala.Double], `f₃`: scala.Option[scala.collection.immutable.List[GenericDefinitions.GenericMessageTemplate]]) => {
+        |  val agentID: scala.Int = `v₃`.asInstanceOf[scala.List[scala.Double]].head.toInt
+        |  if (GenericDefinitions.Keywords.resource.selectDynamic("ProcessID").getValues.toList.head.toInt.>(agentID)) GenericDefinitions.Keywords.resource.selectDynamic("responseCount").:=[scala.Int](GenericDefinitions.Keywords.resource.selectDynamic("responseCount").getValues.toList.head.toInt.+(1))(GenericDefinitions.InputDataProcessor.given_TypeInfo_T[scala.Int](scala.reflect.ClassTag.apply[scala.Int](classOf[scala.Int]))) else ()
+        |}))))""".stripMargin
 
     val tree = tb.parse(code)
 
@@ -140,4 +155,6 @@ object ReflectionExtractUtils:
     println(checkResourceAccess(code))
 
     println(extractSendChannelPairs(code))
+
+    println(extractReceiveCases(code))
   }

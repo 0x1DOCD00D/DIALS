@@ -6,6 +6,7 @@ import GenericDefinitions.{AgentEntity, DialsEntity, StateEntity}
 import Utilz.{ConfigDb, CreateLogger}
 import cats.implicits.*
 import Validation.DialsValidator
+import Validation.Utils.ReflectionExtractUtils.extractSendChannelPairs
 
 object AgentValidators {
   val logger = CreateLogger(classOf[DialsValidator[AgentEntity]])
@@ -38,13 +39,38 @@ object AgentValidators {
           summon[DialsValidator[DialsEntity]].processIR(state, accState)
         }
 
+
+
+
+
 //        proceed to adding the state transitions to the mapping in struct state
+
 
         val resourceValidations = agent.getResources.foldLeft(processed) { (accState, resource) =>
           summon[DialsValidator[DialsEntity]].processIR(resource, accState)
         }
 
-        resourceValidations
+
+        val allStates = agent.getStates
+        val allBehaviors = allStates.flatMap(_.behaviors)
+        val ActiveActionCode = allBehaviors.flatMap(_.onActiveActionsCode)
+        val ActualActionCode = allBehaviors.flatMap(_.actualActionsCode)
+        val onSwitchCode = allStates.flatMap(_.onSwitchCode)
+
+        val allCode = ActiveActionCode ++ ActualActionCode ++ onSwitchCode
+
+        val allMessageChannelPairs = allCode.flatMap(code => extractSendChannelPairs(code))
+//        convert to channel name : string to set [string] to be used in the state machine
+        val allMessageChannelPairsMap = allMessageChannelPairs.groupBy(_._2).map { case (k, v) => (k, v.map(_._1).toSet) }
+
+
+        val finalState = resourceValidations.copy(
+          structState = resourceValidations.structState.copy(
+            channelSentMessages = resourceValidations.structState.channelSentMessages |+| allMessageChannelPairsMap
+          )
+        )
+        finalState
+
       }
     }
 

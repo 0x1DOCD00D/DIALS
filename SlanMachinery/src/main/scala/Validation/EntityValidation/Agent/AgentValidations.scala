@@ -1,13 +1,13 @@
 package Validation.EntityValidation.Agent
 
 import Validation.{Results, States}
-import GenericDefinitions.{AgentEntity, ResourceEntity, ProcessingContext}
+import GenericDefinitions.{AgentEntity, ProcessingContext, ResourceEntity}
 import Validation.States.ValidationState
 import Validation.Results.ValidationResult
 import cats.implicits.*
 import Validation.Utils.ExtractUtils.{extractBehaviourMessage, logger}
 import Validation.EntityValidation.Agent.StateMachineValidations.stateMachineVals
-import Validation.Utils.ReflectionExtractUtils.{checkResourceAccess,checkChannelAccess,checkMessageAccess, extractSendChannelPairs}
+import Validation.Utils.ReflectionExtractUtils.{checkChannelAccess, checkMessageAccess, checkResourceAccess, extractReceiveCases, extractSendChannelPairs}
 import AgentValidationMessageTemplates.*
 import Utilz.ConfigDb
 
@@ -175,6 +175,29 @@ object AgentValidations {
     }
   }
 
+  private def checkReceiveWithSend(agent: AgentEntity, state: ValidationState): ValidationResult = {
+    val allStates = agent.getStates
+    val allBehaviors = allStates.flatMap(_.behaviors)
+    val ActualActionCode = allBehaviors.flatMap(_.actualActionsCode)
+
+
+    val allCode = ActualActionCode
+
+    val allMessageExpectedReceived= allCode.flatMap(code => extractReceiveCases(code)).toSet
+
+    val allIncomingChannels = state.structState.incomingChannels(agent.name)
+
+    val allIncomingMessages = allIncomingChannels.flatMap(channel => state.structState.channelSentMessages.getOrElse(channel, Set.empty))
+
+    val messagesNotReceived = allMessageExpectedReceived.diff(allIncomingMessages)
+    
+    if (messagesNotReceived.isEmpty) {
+      ValidationResult.valid
+    } else {
+      ValidationResult.fromError(receiveWithSend.format(agent.name, messagesNotReceived.mkString(", ")))
+    }
+    
+  }
   /**
    * List of all Agent-level validations
    * (Note: checkCurrentState is currently included twice—remove duplicates if unintended).
@@ -189,6 +212,7 @@ object AgentValidations {
     checkValidChannelAccess,
     checkValidDispatchSend,
     checkValidMessageAccess,
+    checkReceiveWithSend,
   ) ++ stateMachineVals
 
   /**

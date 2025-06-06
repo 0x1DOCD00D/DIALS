@@ -1,10 +1,11 @@
 package Validation.EntityValidation.Behavior
 
 import GenericDefinitions.BehaviorEntity
-import Utilz.CreateLogger
+import Utilz.{ConfigDb, CreateLogger}
 import Validation.DialsValidator
 import Validation.Results.ValidationResult
 import Validation.States.ValidationState
+import cats.implicits.*
 
 object BehaviorValidators {
   val logger = CreateLogger(classOf[DialsValidator[BehaviorEntity]])
@@ -16,7 +17,10 @@ object BehaviorValidators {
       //        can utilize this to assign any information to the agent state machine
       state
 
-    def validate(entity: BehaviorEntity, state: ValidationState, result: ValidationResult): ValidationResult = ???
+    def validate(entity: BehaviorEntity, state: ValidationState, result: ValidationResult): ValidationResult =
+      if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Validating behavior: ${entity.name}")
+
+      BehaviorValidation.validate(entity, state) |+| result
 
 
 }
