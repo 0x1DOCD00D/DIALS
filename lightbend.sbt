@@ -1,2 +1,0 @@
-//ThisBuild / resolvers += "lightbend-commercial-mvn" at "https://repo.lightbend.com/pass/<YourKey>/commercial-releases"
-//ThisBuild / resolvers += Resolver.url("lightbend-commercial-ivy", url("https://repo.lightbend.com/pass/<YourKey>/commercial-releases"))(Resolver.ivyStylePatterns)

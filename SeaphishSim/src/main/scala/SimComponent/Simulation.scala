@@ -8,7 +8,16 @@ import Validation.DialsValidator
 import Validation.States.ValidationState
 import PatternMatch4Messages.*
 object Simulation:
-
+  /**
+   * First attempt of building the full model of the SEAPHISH simualtion. Non of the functionalities of each actor are developed. 
+   * Consists of 1 "Simulator" that dictates how the simulation plays out.
+   * Multiple SEAPHISHes represent 1 banking app/1 device. Grouped in SEAPHISHGroup.
+   * Multiple Attacker represent 1 app for each group of attackers, and 1 app/device for each attacker. 
+   * 
+   * @param numOfSEAPHISH
+   * @param numOfAttacker
+   * @return
+   */
   def buildModel(numOfSEAPHISH: Int, numOfAttacker: Int): (ModelEntity, ValidationResult) = {
     /**
      * global groups, resources, messages and message channels
@@ -41,33 +50,43 @@ object Simulation:
      * Simulator agent
      */
     (agent Simulator) has {
-      (resource EventQueue)
-      (resource SimDuration)
-      (resource SimTime)
-      (resource DoneCounter)
+      (resource EventQueue) := ((pdf UniformIntegerDistribution) as (0,1))
+      (resource SimDuration) := 10 // total week per sim
+      (resource SimTime) := 0 // week number
+      (resource DoneCounter) := 0
+      (resource EventPerRound) := 10
+      (resource BeginLastRound) := 0 // current event number
+      // The last event number
+      (resource EndLastRound) := (resource BeginLastRound).getValues.head.toInt + (resource EventPerRound).getValues.head.toInt
+      (resource CurrEvent)
       (state StartSimulation_InitState) onSwitch{
         // TODO Create New EventQueue
+        (resource CurrEvent) := (resource EventQueue).getValues.toList.apply((resource BeginLastRound).getValues.head.toInt).toInt
       } switch2(state SendEvent)
       (state SendEvent) onSwitch {
         // TODO process next event in EventQueue
-        if (true) {
+        // If begin = end means that the round is over. Increment SimTime and set new end last round
+        
+        if ((resource CurrEvent).getValues.toList.head.toInt == 0) {
+          // 0 is a SEAPHISH event
           (dispatch SEAPHISH_Event) send (channel Sim_to_SEAPHISH)
         }
         else{
           (dispatch Attacker_Event) send (channel Sim_to_Attacker)
         }
+        (resource BeginLastRound) := (resource BeginLastRound).getValues.head.toInt + 1
       } switch2(state Wait_for_done)
       (state Wait_for_done) behaves{
-        (action ReceiveDone) does{
+        (action ReceiveDone) does {
           onEventRule{
             (received Done) -> { (v, f) =>
-              // TODO When Receive done, return back to SendEvent, updateDoneCounter
-
+              // TODO When Receive done, return back to SendEvent, update DoneCounter
+              
             }
           }
         }
         // TODO if time < SimDuration, fail to End_simulation_Kill_All_Actor
-      } switch2(state SendEvent) when (true) fail2(state End_simulation_Kill_All_Actor)
+      } switch2(state SendEvent) when ((resource SimTime).getValues.head.toInt <= (resource SimDuration).getValues.head.toInt) fail2 (state End_simulation_Kill_All_Actor)
       (state End_simulation_Kill_All_Actor) onSwitch{
       }
     } autotrigger (state StartSimulation_InitState)
@@ -161,5 +180,6 @@ object Simulation:
     println(s"Validation result: ${res2.toString}")
 
     (ModelEntity().head, res2)
+    
   }
 

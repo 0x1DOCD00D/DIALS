@@ -10,10 +10,24 @@ lazy val root = (project in file("."))
   .settings(
     name := "DIALS",
     idePackagePrefix := Some("com.lsc")
-  ).aggregate(GenericSimUtilities, SlanMachinery, SimulationEngine) dependsOn (GenericSimUtilities, SlanMachinery, SimulationEngine)
+  ).aggregate(GenericSimUtilities, SlanMachinery, SimulationEngine,SeaphishSim) dependsOn (GenericSimUtilities, SlanMachinery, SimulationEngine,SeaphishSim)
 //enablePlugins Cinnamon
 Global / excludeLintKeys +=idePackagePrefix
+lazy val SeaphishSim = (project in file("SeaphishSim"))
+  .settings(
+    name := "SeaphishSim",
+    libraryDependencies ++= commonDependencies ++ Seq(
+      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+      "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
 
+      // Cinnamon (Akka Classic) dependencies — uncomment to enable telemetry
+      //      Cinnamon.library.cinnamonAkka,
+      //      Cinnamon.library.cinnamonAkkaHttp,
+      //      Cinnamon.library.cinnamonPrometheus,
+      //      Cinnamon.library.cinnamonPrometheusHttpServer,
+    )
+  ) .aggregate(GenericSimUtilities, SlanMachinery)
+  .dependsOn(GenericSimUtilities, SlanMachinery)
 lazy val SimulationEngine = (project in file("SimulationEngine"))
   .settings(
     name := "SimulationEngine",
