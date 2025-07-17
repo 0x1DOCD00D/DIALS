@@ -69,13 +69,11 @@ object Simulator:
       (resource EndLastRound) := (resource CurrEventCount).getValues.head.toInt + (resource EventPerRound).getValues.head.toInt
       (resource CurrEvent)
       (state StartSimulation_InitState) onSwitch {
-        // TODO Create New EventQueue
         (resource CurrEvent) := (resource EventQueue).getValues.toList.apply((resource CurrEventCount).getValues.head.toInt).toInt
       } switch2 (state SendEvent)
       (state SendEvent) onSwitch {
-        // TODO process next event in EventQueue
         // If begin = end means that the round is over. Increment SimTime and set new end last round
-
+        // Get the current event from the EventQueue
         (resource CurrEvent) := (resource EventQueue).getValues.toList.apply((resource CurrEventCount).getValues.head.toInt).toInt
         if ((resource CurrEvent).getValues.toList.head.toInt == 0) {
           // 0 is a SEAPHISH event
@@ -84,6 +82,7 @@ object Simulator:
         else {
           (dispatch EventAttack) send (channel Sim_to_Attacker)
         }
+        // If the current event count is equal to the number of the event this event round is supposed to end, update the sim time and the new event count for the next event 
         if ((resource CurrEventCount).getValues.head.toInt == (resource EndLastRound).getValues.head.toInt) {
           (resource SimTime) := (resource SimTime).getValues.head.toInt + 1
           (resource EndLastRound) := (resource CurrEventCount).getValues.head.toInt + (resource EventPerRound).getValues.head.toInt
@@ -94,14 +93,12 @@ object Simulator:
         (action ReceiveDone) does {
           onEventRule {
             (received AttackDone) -> { (v, f) => print("AttackDone received")
-              // TODO When Receive done, return back to SendEvent, update DoneCounter
             }
           }orElse onEventRule{
             (received SEAPHISHDone) -> { (v, f) => print("SEAPHISHDone received")
             }
           }
         }
-        // TODO if time < SimDuration, fail to End_simulation_Kill_All_Actor
       } switch2 (state SendEvent) when{
         (resource SimTime).getValues.head.toInt < (resource SimDuration).getValues.head.toInt
       } fail2(state End_simulation_Kill_All_Actor);
