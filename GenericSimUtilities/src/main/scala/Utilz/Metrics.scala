@@ -1,7 +1,8 @@
-package utils      // pick any package you like
+package Utilz
+
 
 object Metrics {
-  case class Sample(name: String, millis: Long, memBytes: Long)
+  private case class Sample(name: String, millis: Long, memBytes: Long)
   private var samples = Vector.empty[Sample]
 
   private def usedMem: Long = {

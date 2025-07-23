@@ -21,7 +21,7 @@ import org.scalatest.matchers.should.Matchers
 import org.slf4j.Logger
 import scala.concurrent.duration.DurationInt
 import scala.language.{dynamics, postfixOps}
-import utils.Metrics._
+import Utilz.Metrics._
 
 @DoNotDiscover
 class FullSimulationTestsOriginal extends AnyFlatSpec with Matchers {

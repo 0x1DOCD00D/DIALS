@@ -5,7 +5,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfterAll
 import scala.concurrent.duration._
 import distributedAlternator._
-import utils.Metrics._
+import Utilz.Metrics._
 
 /** Common helpers shared by the individual tests */
 object TestHelpers {
