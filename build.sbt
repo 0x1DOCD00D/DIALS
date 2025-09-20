@@ -4,20 +4,45 @@ import scala.collection.immutable.Seq
 
 ThisBuild / version := "0.1.0-SNAPSHOT"
 
-ThisBuild / scalaVersion := "3.4.2"
+ThisBuild / scalaVersion := "3.6.3"
 
 lazy val root = (project in file("."))
   .settings(
     name := "DIALS",
     idePackagePrefix := Some("com.lsc")
-  ).aggregate(GenericSimUtilities, SlanMachinery) enablePlugins Cinnamon dependsOn (GenericSimUtilities, SlanMachinery)
-
+  ).aggregate(GenericSimUtilities, SlanMachinery, SimulationEngine) dependsOn (GenericSimUtilities, SlanMachinery, SimulationEngine)
+//enablePlugins Cinnamon
 Global / excludeLintKeys +=idePackagePrefix
+
+lazy val SimulationEngine = (project in file("SimulationEngine"))
+  .settings(
+    name := "SimulationEngine",
+    libraryDependencies ++= commonDependencies ++ Seq(
+      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+      "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
+
+      // Cinnamon (Akka Classic) dependencies — uncomment to enable telemetry
+      //      Cinnamon.library.cinnamonAkka,
+      //      Cinnamon.library.cinnamonAkkaHttp,
+      //      Cinnamon.library.cinnamonPrometheus,
+      //      Cinnamon.library.cinnamonPrometheusHttpServer,
+    )
+  ) .aggregate(GenericSimUtilities, SlanMachinery)
+    .dependsOn(GenericSimUtilities, SlanMachinery)
 
 lazy val SlanMachinery = (project in file("SlanMachinery"))
   .settings(
     name := "SlanMachinery",
-    libraryDependencies ++= commonDependencies
+    libraryDependencies ++= commonDependencies ++ Seq(
+      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+      "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
+
+      // Cinnamon (Akka Classic) dependencies — uncomment to enable telemetry
+      //      Cinnamon.library.cinnamonAkka,
+      //      Cinnamon.library.cinnamonAkkaHttp,
+      //      Cinnamon.library.cinnamonPrometheus,
+      //      Cinnamon.library.cinnamonPrometheusHttpServer,
+    )
   ) aggregate GenericSimUtilities dependsOn GenericSimUtilities
 
 lazy val GenericSimUtilities = (project in file("GenericSimUtilities"))
@@ -26,11 +51,12 @@ lazy val GenericSimUtilities = (project in file("GenericSimUtilities"))
     libraryDependencies ++= commonDependencies
   )
 
+
 resolvers += "Akka library repository".at("https://repo.akka.io/maven")
 resolvers += ("Apache Snapshots" at "http://repository.apache.org/content/repositories/snapshots").withAllowInsecureProtocol(true)
 resolvers += ("Apache repo" at "https://repository.apache.org/").withAllowInsecureProtocol(true)
 
-lazy val akkaVersion = "2.9.3"
+lazy val akkaVersion = "2.8.8"
 lazy val scalaTestVersion = "3.2.17"
 lazy val scalaMockitoTestVersion = "3.2.12.0-RC2"
 lazy val typeSafeConfigVersion = "1.4.3"
@@ -47,13 +73,14 @@ val catsScalatestEffects = "1.4.0"
 val apacheSSHVersion = "2.9.3"
 val apacheRngVersion = "1.3"
 val guavaVersion = "33.2.1-jre"
-
+val scalaReflectVersion = "2.13.8"
+val scalaCompilerVersion = "2.13.8"
 
 fork := true
 test / parallelExecution := false
-run / cinnamon := true
-test / cinnamon := true
-cinnamonLogLevel := "INFO"
+//run / cinnamon := true
+//test / cinnamon := true
+//cinnamonLogLevel := "INFO"
 
 Test / testGrouping := (Test / definedTests).value map { test =>
   val options = ForkOptions().withRunJVMOptions(Vector.empty)
@@ -73,6 +100,8 @@ libraryDependencies ++= Seq(
 //  Cinnamon.library.cinnamonPrometheusHttpServer,
 )
 
+
+
 lazy val commonDependencies = Seq(
   "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
   "org.scalatestplus" %% "mockito-4-2" % scalaMockitoTestVersion % Test,
@@ -86,7 +115,11 @@ lazy val commonDependencies = Seq(
   "org.apache.commons" % "commons-rng-simple" % apacheRngVersion,
   "org.apache.sshd" % "sshd-core" % apacheSSHVersion,
 "org.typelevel" %% "cats-core" % catsVersion, // Cats Core library
-"org.typelevel" %% "cats-effect" % catsEffectVersion
+"org.typelevel" %% "cats-effect" % catsEffectVersion,
+  "org.scala-lang" % "scala-reflect" % scalaReflectVersion,
+  "org.scala-lang" % "scala-compiler" % scalaCompilerVersion,
+  "org.scala-lang" %% "scala3-staging" % "3.6.3",
+  "org.scala-lang" %% "scala3-compiler" % "3.6.3",
 )
 
 

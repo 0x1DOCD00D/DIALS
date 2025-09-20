@@ -21,6 +21,7 @@ object GlobalProcessingState:
   def isBehavior: Boolean = currentProcessingState.isInstanceOf[BehaviorEntity]
   def isNoEntity: Boolean = currentProcessingState == NoEntity
   def getCurrentProcessingState: String = currentProcessingState.getClass.getSimpleName
+  def getCurrentProcessingStateEntity: DialsEntity = currentProcessingState
 
   def resetAll(): Unit = 
     currentProcessingState = NoEntity
@@ -30,7 +31,7 @@ object GlobalProcessingState:
     MessageEntity.resetAll()
     ChannelEntity.resetAll()
     BehaviorEntity.resetAll()
-    
+
   def apply(state: DialsEntity): Either[String, DialsEntity] =
     state match
       case a: ModelEntity if currentProcessingState == NoEntity =>

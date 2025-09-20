@@ -3,9 +3,10 @@ package Validation.EntityValidation.Agent
 import Validation.Results.ValidationResult
 import Validation.States.ValidationState
 import GenericDefinitions.{AgentEntity, DialsEntity, StateEntity}
-import Utilz.CreateLogger
+import Utilz.{ConfigDb, CreateLogger}
 import cats.implicits.*
 import Validation.DialsValidator
+import Validation.Utils.ReflectionExtractUtils.extractSendChannelPairs
 
 object AgentValidators {
   val logger = CreateLogger(classOf[DialsValidator[AgentEntity]])
@@ -15,7 +16,7 @@ object AgentValidators {
       val agentHash = agent.hashCode().toString
       if (state.visitedEntities.contains(agentHash)) state
       else {
-        logger.info(s"Processing IR for agent: ${agent.name}")
+        if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Processing IR for agent: ${agent.name}")
 
         val agentList = agent.name::state.smState.agents
 
@@ -38,10 +39,38 @@ object AgentValidators {
           summon[DialsValidator[DialsEntity]].processIR(state, accState)
         }
 
+
+
+
+
 //        proceed to adding the state transitions to the mapping in struct state
 
 
-        processed
+        val resourceValidations = agent.getResources.foldLeft(processed) { (accState, resource) =>
+          summon[DialsValidator[DialsEntity]].processIR(resource, accState)
+        }
+
+
+        val allStates = agent.getStates
+        val allBehaviors = allStates.flatMap(_.behaviors)
+        val ActiveActionCode = allBehaviors.flatMap(_.onActiveActionsCode)
+        val ActualActionCode = allBehaviors.flatMap(_.actualActionsCode)
+        val onSwitchCode = allStates.flatMap(_.onSwitchCode)
+
+        val allCode = ActiveActionCode ++ ActualActionCode ++ onSwitchCode
+
+        val allMessageChannelPairs = allCode.flatMap(code => extractSendChannelPairs(code))
+//        convert to channel name : string to set [string] to be used in the state machine
+        val allMessageChannelPairsMap = allMessageChannelPairs.groupBy(_._2).map { case (k, v) => (k, v.map(_._1).toSet) }
+
+
+        val finalState = resourceValidations.copy(
+          structState = resourceValidations.structState.copy(
+            channelSentMessages = resourceValidations.structState.channelSentMessages |+| allMessageChannelPairsMap
+          )
+        )
+        finalState
+
       }
     }
 
@@ -49,9 +78,14 @@ object AgentValidators {
       val agentHash = agent.hashCode().toString
       if (result.visitedEntities.contains(agentHash)) result
       else {
-        logger.info(s"Validating agent: ${agent.name}")
+        if ConfigDb.`DIALS.General.debugMode` then logger.info(s"Validating agent: ${agent.name}")
         val agentResult = AgentValidations.validate(agent, state)
-        result.copy(visitedEntities = result.visitedEntities :+ agentHash) |+| agentResult
+        val validatedAgents = result.copy(visitedEntities = result.visitedEntities :+ agentHash) |+| agentResult
+        val processedStates = agent.getStates.foldLeft(validatedAgents) { (accState, st) =>
+          summon[DialsValidator[DialsEntity]].validate(st, state, validatedAgents)
+        }
+
+        processedStates
       }
     }
 

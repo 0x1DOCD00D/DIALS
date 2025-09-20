@@ -10,7 +10,7 @@ package GenericDefinitions
 
 import GenericDefinitions.MessageEntity.logger
 import Utilz.{ConfigDb, CreateLogger}
-
+import AkkaMessages._
 import scala.collection.mutable.ListBuffer
 
 class MessageEntity private(val name: String, val fields: ListBuffer[FieldEntity] = ListBuffer(), var values: Array[Any] = Array()) extends DialsEntity:
@@ -52,9 +52,25 @@ class MessageEntity private(val name: String, val fields: ListBuffer[FieldEntity
 
   //TODO: need to implement the logic of the resource value retrieval
   def getStoredValues: Array[Any] = values //need to look up the global table of resources
+//  TODO:  Implement for multiple channels send (array)
+  infix def send(channel: ChannelEntity*): Map[MessageEntity, Array[ChannelEntity]] =
+    // 1) If we’re running inside an actor and execution is ON, try to deliver
+    if Ctx.flag && Ctx.kind == "Agent" then
+      Ctx.channels.get(channel.head.name) match
+        case Some(chanRef) =>
+          println(s"[${Ctx.self.path.name}] → channel ${channel.head.name}: $name")
+          chanRef ! ChannelMessage(Ctx.self, this)
+        case None =>
+          println(s"[send] channel actor ${channel.head.name} not found")
+    else
+      // 2) Either we’re still in model‑build phase, or defaultCtx was used
+      println(s"[send] (build‑time or no ctx) recorded send of $name → ${channel.head.name}")
 
-  infix def send(channel: ChannelEntity*): Map[MessageEntity, Array[ChannelEntity]] = Map(this -> channel.toArray)
-  infix def respond(toWhom: AgentEntity*): Map[MessageEntity, Array[AgentEntity]] = Map(this -> toWhom.toArray)
+    // Always return the structural mapping so DSL semantics stay identical
+    Map(this -> channel.toArray)
+
+  infix def respond(toWhom: AgentEntity*): Map[MessageEntity, Array[AgentEntity]] =
+        Map(this -> toWhom.toArray)
 
 object MessageEntity:
   private val allMessages: ListBuffer[MessageEntity] = ListBuffer()
@@ -73,12 +89,27 @@ object MessageEntity:
 
   def apply(name: String): MessageEntity =
     if ConfigDb.`DIALS.General.debugMode` then logger.info(s"New message entity $name is created")
-    val newMsg = new MessageEntity(name)
-    if GlobalProcessingState.isChannel then
-      ChannelEntity(newMsg)
-    if GlobalProcessingState.isAgent then
-      AgentEntity(newMsg)
-    if GlobalProcessingState.isBehavior then
-      BehaviorEntity(newMsg)
-    else allMessages.prependAll(List(newMsg))
-    newMsg
+    if allMessages.exists(_.name == name) then
+      val msg = allMessages.find(_.name == name).get
+      if GlobalProcessingState.isChannel then
+        ChannelEntity(msg)
+      if GlobalProcessingState.isAgent then
+        AgentEntity(msg)
+      if GlobalProcessingState.isBehavior then
+        BehaviorEntity(msg)
+      else 
+//        remove and prepend
+        allMessages -= msg
+        allMessages.prependAll(List(msg))
+      msg
+    else
+      logger.info(s"Creating message entity $name")
+      val newMsg = new MessageEntity(name)
+      if GlobalProcessingState.isChannel then
+        ChannelEntity(newMsg)
+      if GlobalProcessingState.isAgent then
+        AgentEntity(newMsg)
+      if GlobalProcessingState.isBehavior then
+        BehaviorEntity(newMsg)
+      else allMessages.prependAll(List(newMsg))
+      newMsg

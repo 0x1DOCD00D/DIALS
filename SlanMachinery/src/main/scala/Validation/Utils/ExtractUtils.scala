@@ -1,6 +1,6 @@
 package Validation.Utils
 
-import GenericDefinitions.{AgentEntity, BehaviorEntity, ChannelEntity, DialsEntity, EntityInstanceAlias, GenericMessageTemplate, GroupEntity, MessageEntity, PatternMatch4Messages}
+import GenericDefinitions.{AgentEntity, BehaviorEntity, ChannelEntity, DialsEntity, EntityInstanceAlias, GenericMessageTemplate, GroupEntity, MessageEntity, PatternMatch4Messages, ProcessingContext}
 
 import scala.collection.mutable.ListBuffer
 import scala.runtime.AbstractPartialFunction
@@ -21,9 +21,9 @@ object ExtractUtils {
   def extractMessages(entity: ChannelEntity): Set[MessageEntity] =
     entity.messages.map(_._1).toSet
 
-  def extractBehaviourMessage(entity: BehaviorEntity, messages: Set[MessageEntity]): Set[String] = {
+  def extractBehaviourMessage(using ctx: ProcessingContext)(entity: BehaviorEntity, messages: Set[MessageEntity]): Set[String] = {
     val triggerSet: Set[String] = entity.triggerMsgs.iterator.map(_.name).toSet
-    val actualActionSet: Set[String] = entity.actualActions.iterator.flatMap(extractMessageNamesFromPF(_,messages)).toSet
+    val actualActionSet: Set[String] = entity.actualActions.iterator.flatMap(pfWithCtx=>extractMessageNamesFromPF(pfWithCtx(ctx),messages)).toSet
     logger.info(s"Behavior ${entity.name} has triggers: ${triggerSet.mkString(", ")} and actions: ${actualActionSet.mkString(", ")}")
     triggerSet ++ actualActionSet
   }

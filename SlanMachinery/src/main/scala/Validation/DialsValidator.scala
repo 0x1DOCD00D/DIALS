@@ -1,16 +1,16 @@
 package Validation
 
 import GenericDefinitions.*
-import Utilz.CreateLogger
+import Utilz.{ConfigDb, CreateLogger}
 import Validation.States.ValidationState
 import Validation.Results.ValidationResult
-
 import Validation.EntityValidation.Agent.AgentValidators.given
 import Validation.EntityValidation.Model.ModelValidators.given
 import Validation.EntityValidation.Channel.ChannelValidators.given
 import Validation.EntityValidation.EntityInstance.EntityInstanceValidators.given
 import Validation.EntityValidation.Groups.GroupValidators.given
 import Validation.EntityValidation.State.StateValidators.given
+import Validation.EntityValidation.Resource.ResourceValidators.given
 
 
 // Define the type class for validation
@@ -31,8 +31,9 @@ object DialsValidator {
       case alias: EntityInstanceAlias => summon[DialsValidator[EntityInstanceAlias]].processIR(alias, state)
       case group: GroupEntity         => summon[DialsValidator[GroupEntity]].processIR(group, state)
       case st: StateEntity         => summon[DialsValidator[StateEntity]].processIR(st, state)
+      case resource: ResourceEntity => summon[DialsValidator[ResourceEntity]].processIR(resource, state)
       case _ =>
-        logger.error(s"Unknown DialsEntity type: $entity")
+        if ConfigDb.`DIALS.General.debugMode` then logger.error(s"Unknown DialsEntity type: $entity")
         state
     }
 
@@ -44,7 +45,7 @@ object DialsValidator {
       case group: GroupEntity         => summon[DialsValidator[GroupEntity]].validate(group, state, result)
       case st: StateEntity         => summon[DialsValidator[StateEntity]].validate(st, state, result)
       case _ =>
-        logger.error(s"Unknown DialsEntity type: $entity")
+        if ConfigDb.`DIALS.General.debugMode` then logger.error(s"Unknown DialsEntity type: $entity")
         result
     }
 }
